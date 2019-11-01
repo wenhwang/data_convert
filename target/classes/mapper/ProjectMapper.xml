@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.project.ProjectMapper">
+    <!--
+        '已报备','待审核',
+        '报备中','待审核',
+        '已立项' ,'待报名',
+        '已报名','报名成功',
+        '已解读','待投标',
+        '投标中','待投标',
+        '已投标','待投标',
+        '已开标','待分析',
+        '中标','中标成功',
+        '已中标','中标成功',
+        '未中标','中标失败',
+        '弃标','中标失败',
+        '已签约','施工中',
+        '施工中','施工中',
+        '已竣工','已竣工',
+        '已验收','已验证决算' ,
+        '项目终止','中标失败'
+        '已作废','中标失败'
+        '完工','已验证决算',
+        '其他','待报名'
+
+        0：待报名
+        1：报名成功（待投标）
+        2：报名失败
+        3：投标中
+        4：投标成功
+        5：投标失败
+        6：未开标
+        7：中标成功
+        8：中标失败
+        9:未开工
+        10：施工中
+        11：已竣工
+        12：停工中
+        13：已验收
+        14: 待审核
+        15: 审核不通过
+        16：已撤销
+
+-->
+
+    <resultMap id="PROJECT_INFO" type="com.example.module.project.model.ProjectInfo" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="PROJECT_BID" type="com.example.module.project.model.ProjectBid" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="MAP_BID_DOCUMENT" type="com.example.module.project.model.MapBidDocument" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="MAP_PROJECT_SKILL_AUDIT" type="com.example.module.project.model.MapProjectSkillAudit" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <select id="selectProjectInfo" resultMap="PROJECT_INFO" >
+        SELECT NVL(T.PROJECT_ID, '')                AS "projectId",         --  项目ID
+               NVL(T.PROJECT_CODE, '')              AS "sysNumber",         --  项目编号
+               NVL(T.PROJECT_NAME, '')              AS "projectName",       --  项目名称
+               T.FUTURE_PRICES                      AS "budgetAmount",      --  预算金额
+               ''                                   AS "customerPhone",     --  客户电话
+               NVL(T.PROJECT_TYPE, '')              AS "projectTypeId",     --  项目类型ID
+               NVL(T.PROJECT_TYPE_NAME, '')         AS "projectTypeName",   --  项目类型名称
+               ''                                   AS "projectNatureId",   --  项目性质ID
+               ''                                   AS "projectNatureName", --  项目性质名称
+               NVL(T.PROJECT_SOURCE, '')            AS "projectSourceId",   --  项目来源ID
+               NVL(T.PROJECT_SOURCE_NAME, '')       AS "projectSourceName", --  项目来源名称
+               NVL((SELECT T2.SIGNUP_END_TIME FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "endTime",--  报名截止时间
+               ''                                   AS "province",          --  省份
+               ''                                   AS "city",              --  市
+               NVL((SELECT T2.AREANAME FROM AHZH_USER.CPCAREA T2 WHERE T2.AREAID = T.AREA_ID),
+                   '')                              AS "county",--  区县
+               ''                                   AS "provinceCode",      --  省份代码
+               ''                                   AS "cityCode",          --  市代码
+               NVL(T.AREA_ID, '')                   AS "countyCode",        --  区县代码
+               NVL(T.IS_NOT_BID, '')                AS "isBid",             --  是否公开招标
+               NVL((SELECT SQUARE FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "projectArea",--  项目面积
+               NVL((SELECT BRAND FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "bidBrand",--  投标品牌
+               NVL((SELECT SIGNUP_URL FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "enrollWebsite",--  报名网址
+               (SELECT NVL(T2.BID_URL, '')
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "tenderWebsite",     --  招标网址
+               NVL((SELECT COMPETITOR FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "competitor",--  竞争对手
+               NVL((SELECT COMPETITIVE_BRAND FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "competeBrand",--  竞争品牌
+               NVL(T.DEPT_ID, '')                   AS "departmentId",      --  所属部门ID
+               NVL(T.DEPT_NAME, '')                 AS "department",        --  所属部门
+               NVL(T.HOLDER_ID, '')                 AS "ownerId",           --  业主ID
+               NVL(T.HOLDER, '')                    AS "ownerName",         --  业主名称
+               ''                                   AS "ownerPhone",        --  业主电话
+               NVL(T.PARTNER_ID, '')                AS "partnerId",         --  合伙人ID
+               NVL(T.PARTNER, '')                   AS "partnerName",       --  合伙人名称
+               (SELECT NVL(T2.PARTNER_PHONE_NO, '')
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerPhone",      --  合伙人电话
+               NVL((SELECT T2.PROJECT_DOCKET FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
+                   '')                              AS "projectSummary",--  项目概述
+               ''                                   AS "projectLogo",       --  项目LOGO
+               NVL(T.CREATE_BY, '')                 AS "createBy",          --  创建人
+               NVL(T.MODIFY_BY, '')                 AS "updateBy",          --  修改人
+               NVL(T.CREATE_DATE, '')               AS "createTime",        --  创建时间
+               NVL(T.MODIFY_DATE, '')               AS "updateTime",--  修改时间
+               '0'                                  AS "delFlag",
+               (SELECT DECODE(PROJECT_STATUS,
+                              '已报备', '14',
+                              '报备中', '14',
+                              '已立项', '0',
+                              '已报名', '1',
+                              '已解读', '3',
+                              '投标中', '3',
+                              '已投标', '3',
+                              '已开标', '4',
+                              '中标', '7',
+                              '已中标', '7',
+                              '未中标', '8',
+                              '弃标', '8',
+                              '已签约', '10',
+                              '施工中', '10',
+                              '已竣工', '11',
+                              '已验收', '13',
+                              '项目终止', '8',
+                              '已作废', '8',
+                              '完工', '13',
+                              '其他', '0', '0')
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "status"             --状态
+        FROM AHZH_USER.VIEW_PROJECT_BASE T
+
+    </select>
+
+    <select id="selectTenderInfoHandler" resultMap="PROJECT_BID">
+        SELECT T.PROJECT_ID                                       AS "projectId",         -- 项目ID
+               DECODE(T2.PROJECT_STATUS,
+                      '已报备', '14',
+                      '报备中', '14',
+                      '已立项', '0',
+                      '已报名', '1',
+                      '已解读', '3',
+                      '投标中', '3',
+                      '已投标', '3',
+                      '已开标', '4',
+                      '中标', '7',
+                      '已中标', '7',
+                      '未中标', '8',
+                      '弃标', '8',
+                      '已签约', '10',
+                      '施工中', '10',
+                      '已竣工', '11',
+                      '已验收', '13',
+                      '项目终止', '8',
+                      '已作废', '8',
+                      '完工', '13',
+                      '其他', '0', '0')                             AS "status",            --招投标状态
+               ''                                                 AS "step",              --招投标进度
+               ''                                                 AS "isEnroll",          --是否报名成功
+               T.SIGNUP_TIME                                      AS "realityEnrollTime", ----实际报名时间
+               DECODE(T.SIGNUP_METHOD, '网上', '0', '现场', '1', '2') AS "enrollWay",         --报名方式
+               ''                                                 AS "annualFee",         --年费金额
+               ''                                                 AS "enrollCost",        --报名费用
+               ''                                                 AS "enrollUserId",      --实际报名人ID
+               T.SIGNUP_PEOPLE                                    AS "enrollUserName",    --实际报名人
+               T.CREATE_BY                                        AS "createBy",          --  创建人
+               T.CREATE_DATE                                      AS "createTime",        --  创建时间
+               T.LAST_UPDATED_BY                                  AS "updateBy",          --  修改人
+               T.LAST_UPDATED_DATE                                AS "updateTime",        --  修改时间
+               '0'                                                AS "delFlag"
+        FROM AHZH_USER.EPM_PROJECT_SIGNUP T,
+             AHZH_USER.EPM_PROJECT T2
+        WHERE T.PROJECT_ID = T2.PROJECT_ID
+    </select>
+
+    <select id="selectEnrollQualifications" resultType="com.example.module.project.model.MapDeposit">
+        SELECT PROJECT_ID      AS "projectId",
+               BID_ORG_NAME    AS "bankName",       --  招标机构开户名
+               BID_ORG_BANK    AS "bankAccount",    --    招标机构开户行
+               BID_ORG_ACCOUNT AS "accountName",    --     招标机构账号
+               ''              AS "remarks",        --保证金备注
+               ''              AS "payWayId",       --缴纳方式id
+               ''              AS "payWay",         --缴纳方式
+               ''              AS "endTime",        --保证金截止时间
+               ''              AS "isReplace",      --保证金是否代打
+               ''              AS "realityPayTime", --保证金实际支付日期
+               ''              AS "receiptUrl",     --回执单路径
+               ''              AS "createBy",       --创建人
+               ''              AS "updateBy",       --修改人
+               ''              AS "createTime",     --创建时间
+               ''              AS "updateTime"      --修改时间
+        FROM AHZH_USER.EPM_PROJECT_BID_HEAD HEAD
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectBidDocuments" resultMap="MAP_BID_DOCUMENT">
+        SELECT T.PROJECT_ID                         AS "projectId",
+               T.BID_OPEN_DATE                      AS "openTime",           -- 开标时间
+               ''                                   AS "openWayId",          -- 开标方式id
+               T.BID_OPEN_METHOD                    AS "openWay",            --开标方式
+               T.BID_OPEN_ADDRESS                   AS "openAddress",        --开标地点
+               T.BID_SECURITY                       AS "marginAmount",       --保证金金额
+               ''                                   AS "controlPrice",       --控制价
+               ''                                   AS "serviceFee",         --中标服务费
+               ''                                   AS "commentWayId",       -- 评标方式id
+               (SELECT T2.EVALUATION_METH
+                FROM AHZH_USER.EPM_BUSINESS_REVIEW_HEAD T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "commentWay",         -- 评标方式
+               ''                                   AS "bidBrand",           -- 投标品牌
+               ''                                   AS "receivablesCompany", -- 收款单位
+               (SELECT DECODE(TRIM(T2.REVIEW_RESULTS), '通过', '0', '未通过', '1', '')
+                FROM AHZH_USER.EPM_BUSINESS_REVIEW_HEAD T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "evaluationResult",   -- 评审结果
+               (SELECT T2.REVIEW_RESULTS
+                FROM AHZH_USER.EPM_BUSINESS_REVIEW_HEAD T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "auditOpinion",       -- 审核意见
+               T.CREATE_BY                          AS "createBy",           --  创建人
+               T.CREATE_DATE                        as "createTime",         --  创建时间
+               T.LAST_UPDATE_BY                     AS "updateBy",           --  修改人
+               T.LAST_UPDATE_DATE                   as "updateTime"          --  修改时间
+        FROM AHZH_USER.EPM_PROJECT_BID_HEAD T
+
+    </select>
+
+    <select id="selectProjectQualificationAudits"
+            resultType="com.example.module.project.model.MapProjectQualificationAudit">
+        SELECT PROJECT_ID                                      AS "projectId",
+               ''                                              AS "remarks",             -- 备注
+               ''                                              AS "createBy",            --创建人
+               ''                                              AS "updateBy",            --修改人
+               ''                                              AS "createTime",          --创建时间
+               ''                                              AS "updateTime",          --修改时间
+               DECODE(CHECK_REMARK, '通过', '0', '未通过', '1', '') AS "evaluationResult",    --评审结果
+               REASON                                          AS "evaluationConclusion" --评审结论
+        FROM AHZH_USER.EPM_PROJECT
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectProjectSkillAudits" resultMap="MAP_PROJECT_SKILL_AUDIT" >
+        SELECT T.PROJECT_ID                                        AS "projectId",            --项目ID
+               DECODE(T.REVIEW_RESULTS, '通过', '0', '未通过', '1', '') AS "evaluationResult",     --评审结果
+               T.REVIEW_CONCLUSIONS                                AS "evaluationConclusion", --评审结论
+               ''                                                  AS "remarks",              --备注
+               ''                                                  AS "parameter",            --产品主要技术参数要求
+               ''                                                  AS "performance",          --产品性能要求
+               ''                                                  AS "attestation",          --产品认证要求
+               ''                                                  AS "ability",              --制造商能力证明要求
+               ''                                                  AS "devise",               --施工组织设计要求
+               ''                                                  AS "other",                --其他
+               T.CREATE_BY                                         AS "createBy",             --  创建人
+               T.CREATE_DATE                                       as "createTime",           --  创建时间
+               T.LAST_UPDATED_BY                                   AS "updateBy",             --  修改人
+               T.LAST_UPDATE_DATE                                  as "updateTime"            --  修改时间
+        FROM AHZH_USER.EPM_TECHNICAL_REVIEW_HEAD T
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+
+    <resultMap id="MAP_PROJECT_BUSINESS_AUDIT" type="com.example.module.project.model.MapProjectBusinessAudit" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <select id="selectProjectBusinessAudits" resultMap="MAP_PROJECT_BUSINESS_AUDIT">
+        SELECT ''                                                  AS "paymentWay",--付款方式
+               ''                                                  AS "constructionPeriod",--工期
+               ''                                                  AS "warrantyPeriod",--质保期
+               ''                                                  AS "guaranteeWayId",--担保方式id
+               ''                                                  AS "guaranteeWay",--担保方式
+               ''                                                  AS "guaranteeAmount",--担保金额
+               ''                                                  AS "reputation",--招标人信誉、支付能力
+               DECODE(T.REVIEW_RESULTS, '通过', '0', '未通过', '1', '') AS "evaluationResult",
+               T.REVIEW_CONCLUSIONS                                AS "evaluationConclusion",
+               ''                                                  AS "remarks", --备注
+               T.CREATE_BY                                         AS "createBy", --  创建人
+               T.CREATE_DATE                                       as "createTime", --  创建时间
+               T.LAST_UPDATED_BY                                   AS "updateBy", --  修改人
+               T.LAST_UPDATE_DATE                                  as "updateTime" --  修改时间
+        FROM AHZH_USER.EPM_BUSINESS_REVIEW_HEAD T
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+
+    <resultMap id="MAP_MAKE_BID_DOCUMENT" type="com.example.module.project.model.MapMakeBidDocument" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectMakeBidDocuments" resultMap="MAP_MAKE_BID_DOCUMENT">
+        SELECT ''               AS "isReplace",               -- 是否代做
+               ''               AS "replaceTypeId",           --  代做类型id
+               ''               AS "replaceType",             --  代做类型
+               ''               AS "expectedDeliveryDate",    --   期望交付日期
+               PRODUCER         AS "producer",                --   制作人
+               ''               AS "completionTime",          --   完成时间
+               ''               AS "productionCost",          --   制作费用
+               ''               AS "brandContacts",           --  品牌联系人
+               ''               AS "brandContactInformation", --  品牌联系方式
+               ''               AS "productionRequirements",  --   制作要求
+               CREATE_BY        AS "createBy",                --  创建人
+               CREATE_DATE      AS "createTime",              --  创建时间
+               LAST_UPDATED_BY  AS "updateBy",                --  修改人
+               LAST_UPDATE_DATE AS "updateTime"               --  修改时间
+        FROM AHZH_USER.EPM_MAKING_TENDER
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectCloseBidDocuments" resultType="com.example.module.project.model.MapCloseBidDocument">
+        SELECT T.BID_SEALED_TIME                                   AS "closeBidTime",--      封标时间
+               T.BID_SEALED_PERSON                                 AS "closeBidUser",--      封标人
+               T.BID_SEALED_ADDRESS                                AS "closeBidAddress",--     封标地点
+               ''                                                  AS "checkUser",--     复核人
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "sealResult",--      盖章检查结果
+               ''                                                  AS "sealConclusion",--      盖章检查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "signResult",--      签字检查结果
+               ''                                                  AS "signConclusion",--      签字检查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "scrapClauseResult",--     废标条款检查结果
+               ''                                                  AS "scrapClauseConclusion",--     废标条款检查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "qualificationResult",--     资格条件复查结果
+               ''                                                  AS "qualificationConclusion",--     资格条件复查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "bonusPointsResult",--     加分项得分点复查结果
+               ''                                                  AS "bonusPointsConclusion",--     加分项得分点复查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "quoteResult",--     报价检查结果
+               ''                                                  AS "quoteConclusion",--     报价检查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "closeResult",--     密封检查结果
+               ''                                                  AS "closeConclusion",--     密封检查结论
+               DECODE(T.BID_SEALED_RESULT, '1', '0', '2', '1', '') AS "scriptResult",--      原件检查结果
+               ''                                                  AS "scriptConclusion",--      原件检查结论
+               ''                                                  AS "remarks"--     备注
+        FROM AHZH_USER.EPM_PROJECT_BID_SEALED T
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectWinBidResultAnalyses" resultType="com.example.module.project.model.MapWinBidResultAnalyse">
+        SELECT BID_WINNER                                         AS "finalWinner",   -- 最终中标人
+               DECODE(IS_BID_WIN, '1', '1', '2', '0', IS_BID_WIN) AS "isWinBid",      --   是否中标
+               BID_WIN_AMOUNT                                     AS "winBidAmount",  --   中标金额
+               BID_WIN_TIME                                       AS "publicityDate", --  中标结果公示日期
+               ''                                                 AS "website",       --  中标公示网址
+               BID_WIN_LOSS_REASON                                AS "resultAnalyse", --  投标结果分析
+               ''                                                 AS "bidWinNotice"   --   中标通知书
+        FROM AHZH_USER.EPM_PROJECT_BID_RESULT
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectBidList" resultType="com.example.module.project.model.MapBidList">
+        SELECT COMPETITOR_NAME AS "company",   --  投标单位
+               BRAND           AS "brand",     --投标品牌
+               CONSTRUCTORS    AS "architect", -- 建造师
+               OFFER_PRICE     AS "quote",     --报价
+               RANK            AS "rank"--名次
+        FROM AHZH_USER.EPM_PROJECT_BID_COMPETITOR T
+        WHERE T.PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectProjectAsks" resultType="com.example.module.project.model.ProjectAnswer">
+        SELECT ''           AS "answerEndDate",--答疑截止日期
+               ''           AS "clarifyEndDate",--澄清截止日期
+               ''           AS "email",--答疑接收邮箱
+               OFFICE_HOURS AS "answerDate", --答疑日期
+               TRANSACTOR   AS "addUser", --发起人
+               ''           AS "content", --答疑内容
+               ''           AS "replyDate", --回复日期
+               ''           AS "replyUser", --回复人
+               ''           AS "replyContent", --回复内容
+               ''           AS "answerFile", --答疑附件集合
+               ''           AS "replyFile" --回复附件集合
+        FROM AHZH_USER.EPM_PROJECT_ANSWER T
+        WHERE PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectAgreementProjects" resultType="com.example.module.project.model.ProjectAgreement">
+        SELECT T.PROJECT_ID             AS "projectId",
+               DECODE(T.PROJECT_STATUS, '已签约', '0', '施工中', '50', '完工', '80', '已竣工', '90', '已验收', '100', '其他', '50',
+                      T.PROJECT_STATUS) AS "planSpeed",
+               DECODE(T.PROJECT_STATUS, '已签约', '0', '施工中', '1', '完工', '1', '已验收', '4', '已竣工', '2', '其他', '1',
+                      '1')              AS "status",
+               '0'                      AS "delFlag",
+               ''                       AS "remarks",
+               T.CREATE_BY              AS "createBy",
+               T.CREATE_DATE            as "createTime", --  修改时间,
+               T.MODIFY_BY              AS "updateBy",
+               T.MODIFY_DATE            as "updateTime"  --  修改时间
+        FROM AHZH_USER.EPM_PROJECT T
+        WHERE T.PROJECT_STATUS IN ('已签约', '施工中', '已竣工', '已验收', '项目终止', '已作废', '完工')
+    </select>
+
+    <select id="selectAgreementManageCompany" resultType="com.example.module.project.model.MapManageCompany">
+        SELECT SUPERVISORY_NAME    AS "companyName", --监理单位名称
+               ''                  AS "address",     --监理单位地址
+               SUPERVISORY_LINKMAN AS "userName1",   --负责人
+               SUPERVISORY_PHONENO AS "phone1",      --电话
+               ''                  AS "userName2",
+               ''                  AS "phone2"
+        FROM AHZH_USER.EPM_PROJECT_STARTUP_HEAD T
+        WHERE T.PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectAgreementContractCompany" resultType="com.example.module.project.model.MapContractCompany">
+        SELECT EPC_NAME    AS "companyName", --总包单位名称
+               ''          AS "address",     --总包单位地址
+               EPC_LINKMAN AS "userName1",   --负责人
+               EPC_PHONENO AS "phone1",      --电话
+               ''          AS "userName2",
+               ''          AS "phone2"
+        FROM AHZH_USER.EPM_PROJECT_STARTUP_HEAD T
+        WHERE T.PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectAgreementLaborTeamList" resultType="com.example.module.project.model.MapLaborTeamList">
+        SELECT ''               AS "workerType", --工人种类
+               T.TEAM_MEMBER    AS "userName",   --姓名
+               T.MEMBER_PHONENO AS "phone",      --电话
+               ''               AS "idCard",-- 身份证号
+               ''               AS "fileUrl"     --附件地址
+        FROM AHZH_USER.EPM_PROJECT_STARTUP_TEAM T,
+             AHZH_USER.EPM_PROJECT_STARTUP_HEAD T2
+        WHERE T.PROJECT_STARTUP_HEAD_ID = T2.PROJECT_STARTUP_HEAD_ID(+)
+          AND T2.PROJECT_ID = TO_NUMBER(#{projectId})
+    </select>
+
+    <select id="selectBaseProjectHandler" resultMap="PROJECT_BID">
+        SELECT T.PROJECT_ID  AS "projectId",
+               '0'           AS "status",
+               ''            AS "step",              --招投标进度
+               ''            AS "isEnroll",          --是否报名成功
+
+               ''            AS "realityEnrollTime", --实际报名时间
+               ''            AS "enrollWay",         --报名方式
+               ''            AS "annualFee",         --年费金额
+               ''            AS "enrollCost",        --报名费用
+               ''            AS "enrollUserId",      --实际报名人ID
+               T.CREATE_BY   AS "enrollUserName",    --实际报名人
+               T.CREATE_BY   AS "createBy",          --  创建人
+               T.CREATE_DATE AS "createTime",        --  创建时间
+               T.MODIFY_BY   AS "updateBy",          --  修改人
+               T.MODIFY_DATE AS "updateTime",        --  修改时间
+               '0'           AS "delFlag"
+        FROM AHZH_USER.EPM_PROJECT T
+        WHERE T.PROJECT_STATUS IN ('已报备', '报备中', '已立项')
+    </select>
+</mapper>

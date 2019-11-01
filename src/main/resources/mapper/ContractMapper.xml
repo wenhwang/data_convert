@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.contract.ContractMapper">
+
+    <resultMap id="resultMap" type="java.util.Map" autoMapping="true">
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <!-- 工程合同-->
+    <select id="selectEngineeringContract" resultMap="resultMap" >
+        SELECT T.PROJECT_CONTRACT_ID                          as "contractId",            --  合同ID
+               T.PROJECT_CONTRACT_CODE                        as "contractCode",          --  合同编号
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerId",             --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerName",           --  合伙人名称
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectName",           --  项目名称
+               T.PROJECT_ID                                   as "projectId",             --  项目ID
+               (SELECT T2.PROJECT_CODE
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectCode",           --  项目编码
+               ''                                             as "menuId",                --  菜单功能ID
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerId",               --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerName",             --  业主名称
+               T.PROJECT_CONTRACT_NAME                        as "contractName",          --  合同名称
+               T.PROJECT_CONTRACT_TYPE                        as "contractTypeId",        --  合同类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Project_Contract_Type%'
+                  AND T.PROJECT_CONTRACT_TYPE = T2.DICTVALUE) as "contractType",          --  合同类型
+               ''                                             as "contractCategory",      --  合同类别
+               ''                                             as "contractCategoryId",    --  合同类别ID
+               T.INVOICE_TYPE                                 as "invoiceTypeId",         --  发票类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE
+                  AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceType",           --  发票类型
+               T.CONTRACT_NUMBER                              as "contractNumber",        --  合同份数
+               T.CONTRACT_AMOUNT                              as "contractAmount",        --  合同金额
+               T.TAX_RATE                                     as "invoiceTaxRate",        --  发票税率
+               ''                                             as "invoiceTaxRateId",      --  发票税率ID
+               T.SIGNUP_ADDRESS                               as "signedAt",              --  签订地点
+               T.PROJECT_MANAGER_NAME                         as "builder",               --  建造师
+               ''                                             as "builderId",             --  建造师ID
+               T.SIGNUP_DATE                                  as "signedDate",            --  签订日期
+               T.FIRST_PARTY_NAME                             as "signedUnit",            --  签订单位
+               T.FIRST_PARTY_LINKMAN                          as "contacts",              --  联系人
+               T.FIRST_PARTY_PHONENO                          as "contactWay",            --  联系方式
+               T.SECOND_PARTY_BANK                            as "bank",                  --  开户行
+               T.SECOND_PARTY_ACCOUNT                         as "bankAccount",           --  账号
+               T.SECOND_PARTY_USERNAME                        as "accountName",           --  开户名称
+               T.BRAND                                        as "brand",                 --  品牌
+               T.ACCEPTANCE_CRITERIA                          as "acceptanceCriteria",    --  验收标准
+               ''                                             as "acceptanceCriteriaId",  --  验收标准ID
+               T.PERFORMANCE_SECURITY                         as "performanceBond",       --  履约保证金
+               T.SQUARE                                       as "constructionArea",      --  建设面积
+               ''                                             as "securityDeposit",       --  安全保证金
+               T.GUARANTEE_AMOUNT                             as "qualityDeposit",        --  质保金
+               T.GUARANTEE_PERIOD                             as "warranty",              --  质保期
+               ''                                             as "warrantyExpirationDate",--  质保金到期日期
+               T.REMARK                                       as "remark",                --  备注
+               DECODE(T.STAT,
+                      1, '0',-- 制单
+                      3, '0',-- 启动
+                      5, '3',-- 已审核
+                      ''-- 关闭
+                   )                                          as "contractStatus",        --  合同状态
+               T.CREATE_BY                                    as "createBy",              --  创建人
+               T.CREATE_DATE                                  as "createTime",            --  创建时间
+               T.LAST_UPDATE_BY                               as "updateBy",              --  修改人
+               T.LAST_UPDATE_DATE                             as "updateTime",            --  修改时间
+               '0'                                            as "delFlag",               --  删除标识
+               '0'                                            as "type",
+               ''                                             AS "settlementAmount",      -- 已结算金额
+               ''                                             AS "unSettlementAmount",    -- 未结算金额
+               (SELECT NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                FROM AHZH_USER.VIEW_PROJECT_OUTPUT_INVOICE
+                WHERE PROJECT_ID = T.PROJECT_ID
+                GROUP BY PROJECT_ID)                          AS "openInvoiceAmount",     -- 已开票金额
+               (T.CONTRACT_AMOUNT - (SELECT NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                                     FROM AHZH_USER.VIEW_PROJECT_OUTPUT_INVOICE
+                                     WHERE PROJECT_ID = T.PROJECT_ID
+                                     GROUP BY PROJECT_ID))    AS "unOpenInvoiceAmount",   -- 未开票金额
+               (SELECT NVL(SUM(RECEIPT_AMOUNT), 0) RECEIPT_AMOUNT
+                FROM AHZH_USER.VIEW_DINGTALK_RECEIPT_VOUCHER HEAD
+                WHERE BUSINESS_TYPE_NAME = '收工程款'
+                  AND PROJECT_ID = T.PROJECT_ID
+                GROUP BY PROJECT_ID)                          AS "receivablesAmount",     -- 已收款金额
+               (T.CONTRACT_AMOUNT - (SELECT NVL(SUM(RECEIPT_AMOUNT), 0) RECEIPT_AMOUNT
+                                     FROM AHZH_USER.VIEW_DINGTALK_RECEIPT_VOUCHER HEAD
+                                     WHERE BUSINESS_TYPE_NAME = '收工程款'
+                                       AND PROJECT_ID = T.PROJECT_ID
+                                     GROUP BY PROJECT_ID))    AS "unReceivablesAmount",   -- 未收款金额
+               T.CONTRACT_AMOUNT                              as "actualContractAmount"   --  合同真实金额
+        FROM AHZH_USER.EPM_PROJECT_CONTRACT T
+        WHERE T.PROJECT_CONTRACT_CHARACTER = 1
+          AND T.STAT != 99
+    </select>
+
+    <!--增补合同-->
+    <select id="selectExtEngineeringContract" resultMap="resultMap">
+
+        SELECT T.PROJECT_CONTRACT_ID                          as "contractId",            -- 合同ID
+               T.PROJECT_CONTRACT_CODE                        as "contractCode",          --  合同编号
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerId",             --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerName",           --  合伙人名称
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectName",           --  项目名称
+               T.PROJECT_ID                                   as "projectId",             --  项目ID
+               (SELECT T2.PROJECT_CODE
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectCode",           --  项目编码
+               ''                                             as "menuId",                --  菜单功能ID
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerId",               --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerName",             --  业主名称
+               T.PROJECT_CONTRACT_NAME                        as "contractName",          --  合同名称
+               T.PROJECT_CONTRACT_TYPE                        as "contractTypeId",        --  合同类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Project_Contract_Type%'
+                  AND T.PROJECT_CONTRACT_TYPE = T2.DICTVALUE) as "contractType",          --  合同类型
+               ''                                             as "contractCategory",      --  合同类别
+               ''                                             as "contractCategoryId",    --  合同类别ID
+               T.INVOICE_TYPE                                 as "invoiceTypeId",         --  发票类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE
+                  AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceType",           --  发票类型
+               T.CONTRACT_NUMBER                              as "contractNumber",        --  合同份数
+               T.CONTRACT_AMOUNT                              as "contractAmount",        --  合同金额
+               T.CONTRACT_AMOUNT                              as "actualContractAmount",  --  合同真实金额
+               T.TAX_RATE                                     as "invoiceTaxRate",        --  发票税率
+               ''                                             as "invoiceTaxRateId",      --  发票税率ID
+               T.SIGNUP_ADDRESS                               as "signedAt",              --  签订地点
+               T.PROJECT_MANAGER_NAME                         as "builder",               --  建造师
+               ''                                             as "builderId",             --  建造师ID
+               T.SIGNUP_DATE                                  as "signedDate",            --  签订日期
+               T.FIRST_PARTY_NAME                             as "signedUnit",            --  签订单位
+               T.FIRST_PARTY_LINKMAN                          as "contacts",              --  联系人
+               T.FIRST_PARTY_PHONENO                          as "contactWay",            --  联系方式
+               T.SECOND_PARTY_BANK                            as "bank",-- 开户行
+               T.SECOND_PARTY_ACCOUNT                         as "bankAccount",--  账号
+               T.SECOND_PARTY_USERNAME                        as "accountName",           -- 开户名称
+               T.BRAND                                        as "brand",                 --  品牌
+               ''                                             as "acceptanceCriteria",    --  验收标准
+               ''                                             as "acceptanceCriteriaId",--  验收标准ID
+               T.PERFORMANCE_SECURITY                         as "performanceBond",       --  履约保证金
+               T.SQUARE                                       as "constructionArea",      --  建设面积
+               ''                                             as "securityDeposit",       --  安全保证金
+               T.GUARANTEE_AMOUNT                             as "qualityDeposit",        --  质保金
+               T.GUARANTEE_PERIOD                             as "warranty",              --  质保期
+               ''                                             as "warrantyExpirationDate",--  质保金到期日期
+               T.REMARK                                       as "remark",                --  备注
+               T.STAT                                         as "contractStatus",        --  合同状态
+               T.CREATE_BY                                    as "createBy",              --  创建人
+               T.CREATE_DATE                                  as "createTime",            --  创建时间
+               T.LAST_UPDATE_BY                               as "updateBy",              --  修改人
+               T.LAST_UPDATE_DATE                             as "updateTime",            --  修改时间
+               '0'                                            as "delFlag",               --  删除标识
+               '0'                                            as "type"
+        FROM AHZH_USER.EPM_PROJECT_CONTRACT_EXTRA T
+        WHERE T.PROJECT_CONTRACT_CHARACTER = 1
+          AND T.STAT = 5
+    </select>
+
+    <!--劳务合同-->
+    <select id="selectLaborContract" resultMap="resultMap">
+        SELECT T.PROJECT_CONTRACT_ID                          as "contractId",             -- 合同ID
+               T.PROJECT_CONTRACT_CODE                        as "contractCode",           --  合同编号
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerId",              --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "partnerName",            --  合伙人名称
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectName",            --  项目名称
+               T.PROJECT_ID                                   as "projectId",              --  项目ID
+               (SELECT T2.PROJECT_CODE
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "projectCode",            --  项目编码
+               ''                                             as "menuId",                 --  菜单功能ID
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerId",                --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "ownerName",              --  业主名称
+               (SELECT PROJECT_CONTRACT_ID
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)              as "parentContractId",       --主合同ID
+               (SELECT PROJECT_CONTRACT_NAME
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)              as "parentContractName",     --主合同名称
+               (SELECT PROJECT_CONTRACT_CODE
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)              as "parentContractCode",     --主合同编号
+               T.PROJECT_CONTRACT_NAME                        as "contractName",           --  合同名称
+               T.PROJECT_CONTRACT_TYPE                        as "contractTypeId",         --  合同类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Project_Contract_Type%'
+                  AND T.PROJECT_CONTRACT_TYPE = T2.DICTVALUE) as "contractType",           --  合同类型
+               ''                                             as "contractCategory",       --  合同类别
+               ''                                             as "contractCategoryId",     --  合同类别ID
+               T.INVOICE_TYPE                                 as "invoiceTypeId",          --  发票类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE
+                  AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceType",            --  发票类型
+               T.CONTRACT_NUMBER                              as "contractNumber",         --  合同份数
+               T.CONTRACT_AMOUNT                              as "contractAmount",         --  合同金额
+               T.TAX_RATE                                     as "invoiceTaxRate",         --  发票税率
+               ''                                             as "invoiceTaxRateId",       --  发票税率ID
+               T.SIGNUP_ADDRESS                               as "signedAt",               --  签订地点
+               T.PROJECT_MANAGER_NAME                         as "builder",                --  建造师
+               ''                                             as "builderId",              --  建造师ID
+               T.SIGNUP_DATE                                  as "signedDate",             --  签订日期
+               T.FIRST_PARTY_NAME                             as "signedUnit",             --  签订单位
+               T.FIRST_PARTY_LINKMAN                          as "contacts",               --  联系人
+               T.FIRST_PARTY_PHONENO                          as "contactWay",             --  联系方式
+               T.SECOND_PARTY_BANK                            as "bank",                   -- 开户行
+               T.SECOND_PARTY_ACCOUNT                         as "bankAccount",            --  账号
+               T.SECOND_PARTY_USERNAME                        as "accountName",            -- 开户名称
+               T.BRAND                                        as "brand",                  --  品牌
+               T.ACCEPTANCE_CRITERIA                          as "acceptanceCriteria",     --  验收标准
+               ''                                             as "acceptanceCriteriaId",--  验收标准ID
+               T.PERFORMANCE_SECURITY                         as "performanceBond",        --  履约保证金
+               T.SQUARE                                       as "constructionArea",       --  建设面积
+               ''                                             as "securityDeposit",        --  安全保证金
+               T.GUARANTEE_AMOUNT                             as "qualityDeposit",         --  质保金
+               T.GUARANTEE_PERIOD                             as "warranty",               --  质保期
+               ''                                             as "warrantyExpirationDate",--  质保金到期日期
+               ''                                             as "contractUses",         --用途
+               ''                                             as "contractUsesId",       --用途Id
+               T.REMARK                                       as "remark",                 --  备注
+               DECODE(T.STAT,
+                      1, '0',-- 制单
+                      3, '0',-- 启动
+                      5, '3',-- 已审核
+                      ''-- 关闭
+                   )                                          as "contractStatus",         --  合同状态
+               T.CREATE_BY                                    as "createBy",               --  创建人
+               T.CREATE_DATE                                  as "createTime",             --  创建时间
+               T.LAST_UPDATE_BY                               as "updateBy",               --  修改人
+               T.LAST_UPDATE_DATE                             as "updateTime",             --  修改时间
+               '0'                                            as "delFlag",                --  删除标识
+               '1'                                            as "type",
+               ''                                             AS "settlementAmount",       -- 已结算金额
+               ''                                             AS "unSettlementAmount",     -- 未结算金额
+               (SELECT NVL(SUM(INVOICE_AMOUNT), 0)
+                FROM AHZH_USER.VIEW_INPUTINVOICEDETAIL DETAIL,
+                     AHZH_USER.EPM_PROJECT
+                WHERE DETAIL.PROJECT_CODE = EPM_PROJECT.PROJECT_CODE
+                  AND INVOICE_CLASS_NAME = '劳务'
+                  AND PROJECT_ID = T.PROJECT_ID
+                GROUP BY PROJECT_ID)                          AS "receiveInvoiceAmount",   -- 已收票金额
+               (T.CONTRACT_AMOUNT - (SELECT NVL(SUM(INVOICE_AMOUNT), 0)
+                                     FROM AHZH_USER.VIEW_INPUTINVOICEDETAIL DETAIL,
+                                          AHZH_USER.EPM_PROJECT
+                                     WHERE DETAIL.PROJECT_CODE = EPM_PROJECT.PROJECT_CODE
+                                       AND INVOICE_CLASS_NAME = '劳务'
+                                       AND PROJECT_ID = T.PROJECT_ID
+                                     GROUP BY PROJECT_ID))    AS "unReceiveInvoiceAmount", -- 未收票金额
+               ''                                             AS "payAmount",              -- 已付款金额
+               ''                                             AS "unPayAmount",            -- 未付款金额
+               T.CONTRACT_AMOUNT                              as "actualContractAmount"    --  合同真实金额
+        FROM AHZH_USER.EPM_PROJECT_CONTRACT T
+        WHERE PROJECT_CONTRACT_CHARACTER = 2
+          AND PROJECT_CONTRACT_TYPE = 1
+          AND T.STAT != 99
+    </select>
+
+    <!--采购合同-->
+    <select id="selectPurchaseContract" resultMap="resultMap">
+        SELECT (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "projectName",--  项目名称
+               T.PROJECT_ID                                                    as "projectId", --  项目ID
+               (SELECT T2.PROJECT_CODE
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "projectCode",--  项目编码
+               T.PUR_CONTRACT_HEAD_ID                                          as "contractId", --  合同ID
+               T.CONTRACT_NO                                                   as "contractCode", --  合同编号
+               ''                                                              AS "contractName", --  合同名称
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "partnerId", --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "partnerName", --  合伙人名称
+               ''                                                              as "menuId", --  菜单功能ID
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "ownerId", --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "ownerName", --  业主名称
+               (SELECT PROJECT_CONTRACT_ID
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)                               as "parentContractId", --主合同ID
+               (SELECT PROJECT_CONTRACT_NAME
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)                               as "parentContractName", --主合同名称
+               (SELECT PROJECT_CONTRACT_CODE
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)                               as "parentContractCode", --主合同编号
+               ''                                                              as "contractNumber", --  合同份数
+               T.TOTAL_AMOUNT                                                  AS "contractAmount", --  合同金额
+               T.CONTRACT_TYPE                                                 as "contractTypeId", --  合同类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Contract_Type%'
+                  AND T.CONTRACT_TYPE = T2.DICTVALUE)                          as "contractType", --  合同类型
+               T.TAX_RATE                                                      as "invoiceTaxRate", --  发票税率
+               ''                                                              as "invoiceTaxRateId", --  发票税率ID
+               ''                                                              as "invoiceTypeId", --  发票类型ID
+               ''                                                              as "invoiceType", --  发票类型
+               ''                                                              as "contractUses", --用途
+               ''                                                              as "contractUsesId",--用途Id
+               (SELECT T2.VENDOR_NAME
+                FROM AHZH_USER.VENDOR T2
+                WHERE T2.VENDOR_ID = T.VENDOR_ID)                              AS "signedUnit", --  签订单位
+               T.VENDOR_PHONE_NAME                                             AS "contacts", --  联系人
+               T.VENDOR_PHONE                                                  AS "contactWay", --  联系方式
+               T.CONTRACT_BEGIN_DATE                                           AS "signedDate", --  签订日期
+               T.SIGN_ADDRESS                                                  as "signedAt", --  签订地点
+               ''                                                              as "deliveryAt", --  交货地点
+               ''                                                              as "deliveryDate", --  交货日期
+               ''                                                              as "qualityDeposit", --  质保金
+               ''                                                              as "bank", --开户行
+               ''                                                              as "bankAccount", --账号
+               ''                                                              as "accountName", --开户名称
+               T.NOTE                                                          AS "remark", --  备注
+               DECODE(T.STAT,
+                      1, '0',-- 制单
+                      3, '0',-- 启动
+                      5, '3',-- 已审核
+                      ''-- 关闭
+                   )                                                           AS "contractStatus", --  合同状态
+               T.CREATED_BY                                                    as "createBy", --  创建人
+               T.CREATION_DATE                                                 as "createTime", --  创建时间
+               T.LAST_UPDATED_BY                                               as "updateBy", --  修改人
+               T.LAST_UPDATE_DATE                                              as "updateTime", --  修改时间
+               '0'                                                             as "delFlag", --  删除标识
+               '2'                                                             as "type",
+               ''                                                              AS "settlementAmount", -- 已结算金额
+               ''                                                              AS "unSettlementAmount",--未结算金额
+               (
+                   SELECT NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                   FROM AHZH_USER.VIEW_INPUTINVOICEDETAIL DETAIL
+                   WHERE INVOICE_CLASS_NAME = '材料'
+                     AND PUR_CONTRACT_CODE = T.CONTRACT_NO
+                   GROUP BY PUR_CONTRACT_CODE)                                 AS "receiveInvoiceAmount",--已收票金额
+               (T.TOTAL_AMOUNT - (SELECT NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                                  FROM AHZH_USER.VIEW_INPUTINVOICEDETAIL DETAIL
+                                  WHERE INVOICE_CLASS_NAME = '材料'
+                                    AND PUR_CONTRACT_CODE = T.CONTRACT_NO
+                                  GROUP BY PUR_CONTRACT_CODE))                 AS "unReceiveInvoiceAmount",--未收票金额
+               (
+                   SELECT SUM(PAYMENT_AMOUNT) --累计付款
+                   FROM AHZH_USER.PUR_CONTRACT_HEAD CONTRACT,
+                        AHZH_USER.EPM_PROJECT PROJECT,
+                        AHZH_USER.VIEW_PROJECT_BASE BASE,
+                        AHZH_USER.VIEW_BCS_CUSTOMER CUSTOMER,
+                        AHZH_USER.VIEW_PROJECT_SALESMAN SALESMAN,
+                        AHZH_USER.VENDOR,
+                        (SELECT PUR_CONTRACT_CODE,
+                                NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                         FROM AHZH_USER.FD_INPUT_INVOICE_HEAD HEAD
+                         GROUP BY PUR_CONTRACT_CODE) INVOICE,
+                        (SELECT PUR_CONTRACT_ID,
+                                NVL(SUM(HEAD.AMOUNT_CREDIT), 0) PAYMENT_AMOUNT
+                         FROM AHZH_USER.FIN_PAYING_VOUCHER HEAD,
+                              AHZH_USER.FD_PAYMENT_TYPE,
+                              AHZH_USER.PUR_PAYMENT_APPLY_HEAD APPLY
+                         WHERE HEAD.BUSINESS_TYPE = FD_PAYMENT_TYPE.FD_PAYMENT_TYPE_ID
+                           AND HEAD.BILL_NO = APPLY.APPLY_NO
+                           AND SYSCREATE_TYPE = 3
+                           AND HEAD.STAT = 5
+                         GROUP BY PUR_CONTRACT_ID) PAYMENT
+                   WHERE CONTRACT.PROJECT_ID = BASE.PROJECT_ID(+)
+                     AND CONTRACT.PROJECT_ID = PROJECT.PROJECT_ID(+)
+                     AND CONTRACT.PROJECT_ID = SALESMAN.PROJECT_ID(+)
+                     AND BASE.PARTNER_ID = CUSTOMER.CUSTOMER_ID(+)
+                     AND CONTRACT.CONTRACT_NO = INVOICE.PUR_CONTRACT_CODE(+)
+                     AND CONTRACT.PUR_CONTRACT_HEAD_ID = PAYMENT.PUR_CONTRACT_ID(+)
+                     AND CONTRACT.VENDOR_ID = VENDOR.VENDOR_ID(+)
+                     AND CONTRACT.STAT = 5
+                     AND CONTRACT.CONTRACT_NO = T.CONTRACT_NO
+               )                                                               AS "payAmount",--已付款
+               (T.TOTAL_AMOUNT - (SELECT SUM(PAYMENT_AMOUNT) --累计付款
+                                  FROM AHZH_USER.PUR_CONTRACT_HEAD CONTRACT,
+                                       AHZH_USER.EPM_PROJECT PROJECT,
+                                       AHZH_USER.VIEW_PROJECT_BASE BASE,
+                                       AHZH_USER.VIEW_BCS_CUSTOMER CUSTOMER,
+                                       AHZH_USER.VIEW_PROJECT_SALESMAN SALESMAN,
+                                       AHZH_USER.VENDOR,
+                                       (SELECT PUR_CONTRACT_CODE,
+                                               NVL(SUM(INVOICE_AMOUNT), 0) INVOICE_AMOUNT
+                                        FROM AHZH_USER.FD_INPUT_INVOICE_HEAD HEAD
+                                        GROUP BY PUR_CONTRACT_CODE) INVOICE,
+                                       (SELECT PUR_CONTRACT_ID,
+                                               NVL(SUM(HEAD.AMOUNT_CREDIT), 0) PAYMENT_AMOUNT
+                                        FROM AHZH_USER.FIN_PAYING_VOUCHER HEAD,
+                                             AHZH_USER.FD_PAYMENT_TYPE,
+                                             AHZH_USER.PUR_PAYMENT_APPLY_HEAD APPLY
+                                        WHERE HEAD.BUSINESS_TYPE = FD_PAYMENT_TYPE.FD_PAYMENT_TYPE_ID
+                                          AND HEAD.BILL_NO = APPLY.APPLY_NO
+                                          AND SYSCREATE_TYPE = 3
+                                          AND HEAD.STAT = 5
+                                        GROUP BY PUR_CONTRACT_ID) PAYMENT
+                                  WHERE CONTRACT.PROJECT_ID = BASE.PROJECT_ID(+)
+                                    AND CONTRACT.PROJECT_ID = PROJECT.PROJECT_ID(+)
+                                    AND CONTRACT.PROJECT_ID = SALESMAN.PROJECT_ID(+)
+                                    AND BASE.PARTNER_ID = CUSTOMER.CUSTOMER_ID(+)
+                                    AND CONTRACT.CONTRACT_NO = INVOICE.PUR_CONTRACT_CODE(+)
+                                    AND CONTRACT.PUR_CONTRACT_HEAD_ID = PAYMENT.PUR_CONTRACT_ID(+)
+                                    AND CONTRACT.VENDOR_ID = VENDOR.VENDOR_ID(+)
+                                    AND CONTRACT.STAT = 5
+                                    AND CONTRACT.CONTRACT_NO = T.CONTRACT_NO)) AS "unPayAmount",--未付款
+               T.TOTAL_AMOUNT                                                  as "actualContractAmount" --  合同真实金额
+        FROM AHZH_USER.PUR_CONTRACT_HEAD T
+        WHERE T.STAT != 99
+    </select>
+
+    <!--分包合同-->
+    <select id="selectSubContract" resultMap="resultMap">
+        SELECT T.PROJECT_ID                         as "projectId",             --  项目ID
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) as "projectName",--  项目名称
+               (SELECT T2.PROJECT_CODE
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) as "projectCode",--  项目编码
+               (SELECT PROJECT_CONTRACT_ID
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)    AS "parentContractId",      -- 主合同ID
+               (SELECT PROJECT_CONTRACT_NAME
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)    AS "parentContractName",--  主合同名称
+               (SELECT PROJECT_CONTRACT_CODE
+                FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
+                WHERE PROJECT_ID = T.PROJECT_ID)    AS "parentContractCode",--  主合同编号
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) as "partnerId",             --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) as "partnerName",           --  合伙人名称
+               T.PROJECT_CONTRACT_ID                AS "contractId",            -- 合同ID
+               T.PROJECT_CONTRACT_CODE              AS "contractCode",          -- 合同编号
+               T.PROJECT_CONTRACT_NAME              AS "contractName",          -- 合同名称
+               T.TAX_RATE                           as "invoiceTaxRate",        --  发票税率
+               ''                                   as "invoiceTaxRateId",      --  发票税率ID
+               T.INVOICE_TYPE                       as "invoiceTypeId",         --  发票类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE
+                  AND T2.IDPATH LIKE '%\-11696\%')  as "invoiceType",           --  发票类型
+               T.CONTRACT_NUMBER                    AS "contractNumber",        --  合同份数
+               T.CONTRACT_AMOUNT                    AS "contractAmount",        --  合同金额
+               T.CONTRACT_AMOUNT                    as "actualContractAmount",  --  合同真实金额
+               T.SECOND_PARTY_NAME                  AS "signedUnit",            --  签订单位
+               T.SIGNUP_ADDRESS                     AS "signedAt",              -- 签订地点
+               T.SIGNUP_DATE                        AS "signedDate",            --  签订日期
+               T.SECOND_PARTY_LINKMAN               AS "contacts",              -- 联系人
+               T.SECOND_PARTY_PHONENO               AS "contactWay",            -- 联系方式
+               T.REMARK                             AS "remark",                -- 备注
+               T.SECOND_PARTY_USERNAME              AS "accountName",           --  开户名称
+               T.SECOND_PARTY_BANK                  AS "bank",                  --  开户行
+               T.SECOND_PARTY_ACCOUNT               AS "bankAccount",           -- 账号
+               ''                                   AS "settlementAmount",      --	已结算金额
+               ''                                   AS "unSettlementAmount",    --	未结算金额
+               ''                                   AS "receiveInvoiceAmount",  --	已收票金额
+               ''                                   AS "unReceiveInvoiceAmount",--	未收票金额
+               ''                                   AS "payAmount",             --	已付款金额
+               ''                                   AS "unPayAmount",           --	未付款金额
+               DECODE(T.STAT,
+                      1, '0',-- 制单
+                      3, '0',-- 启动
+                      5, '3',-- 已审核
+                      ''-- 关闭
+                   )                                AS "contractStatus",        --  合同状态
+               T.CREATE_BY                          as "createBy",              --  创建人
+               T.CREATE_DATE                        as "createTime",            --  创建时间
+               T.LAST_UPDATE_BY                     as "updateBy",              --  修改人
+               T.LAST_UPDATE_DATE                   as "updateTime",            --  修改时间
+               '0'                                  as "delFlag",               --  删除标识
+               '3'                                  as "type"
+        FROM AHZH_USER.EPM_PROJECT_CONTRACT T
+        WHERE T.PROJECT_CONTRACT_CHARACTER = 2
+          AND NVL(T.PROJECT_CONTRACT_TYPE, 0) != 1
+          AND T.STAT != 99
+
+    </select>
+
+    <!--合伙人合同-->
+    <select id="selectCobberContract" resultMap="resultMap">
+        SELECT T.SA_KACONTRACT_BILL_HEAD_ID                                                       as "contractId",                 --  合同ID
+               T.COMPACT_NO                                                                       as "contractCode",               --  合同编号
+               T.SALE_COMPACT_NUM                                                                 as "contractName",               --  合同名称
+               T.CUSTOMER_ID                                                                      as "partnerId",                  --  合伙人ID
+               T.CUSTOMER                                                                         as "partnerName",--  合伙人名称
+               T.CONTRACT_TYPE                                                                    as "contractType",               --  合同类型ID
+               (SELECT T2.DICTVALUE
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Holder_Type%'
+                  AND T.CONTRACT_TYPE = T2.DICTNAME)                                              as "contractTypeId",             --  合同类型
+               ''                                                                                 as "contractNumber",             --  合同份数
+               T.TOTAL_AMOUNT                                                                     as "contractAmount",             --  合同金额
+               ''                                                                                 as "invoiceFlag",--  是否开票
+               ''                                                                                 as "invoiceType",--  发票类型
+               ''                                                                                 as "invoiceTypeId",--  发票类型
+               ''                                                                                 as "invoiceTaxRate",--  发票税率
+               ''                                                                                 as "invoiceTaxRateId",--  发票税率ID
+               T.UNDERWRITE_DATE                                                                  as "signedDate",                 --  签订日期
+               T.SIGNER                                                                           as "operator",                   --  经办人
+               ''                                                                                 as "operatorId",--  经办人ID
+               T.CUSTOMER_ADD                                                                     as "businessArea",               --  经营区域
+               T.TOTAL_QTY                                                                        as "freeTimes",                  --  免费次数
+               ''                                                                                 as "usedFreeTimes",--  已用免费次数
+               ''                                                                                 as "unUsedFreeTimes",--  剩余免费个数
+               T.START_DATE                                                                       as "startTime",                  --  生效日期
+               T.END_DATE                                                                         as "endTime",                    --  到期日期
+               ''                                                                                 as "payWay",--  付款方式
+               ''                                                                                 as "payWayId",--  付款方式ID
+               T.REMARK                                                                           as "remark",                     --  备注
+               T.SALES_PERFORMANCE                                                                as "salesPerformance",--  销售业绩
+               ''                                                                                 as "completedSalesPerformance",--  已完成销售业绩
+               ''                                                                                 as "uncompletedSalesPerformance",--  未完成销售业绩
+               SIGNER                                                                             as "principal",--  负责人
+               (SELECT T2.CUSTOMER_ID FROM AHZH_USER.CUSTOMER T2 WHERE T2.CUSTOMER_NAME = SIGNER) as "principalId",--  负责人ID
+               T.CUSTOMER                                                                         AS "signedUnit",                 --签订单位
+               ''                                                                                 AS "settlementAmount",           -- 已结算金额
+               ''                                                                                 AS "unSettlementAmount",         --未结算金额
+               ''                                                                                 AS "openInvoiceAmount",          --已开票金额
+               ''                                                                                 AS "unOpenInvoiceAmount",        --未开票金额
+               ''                                                                                 AS "receivablesAmount",          --已收款金额
+               ''                                                                                 AS "unReceivablesAmount",        --未收款金额
+               '3'                                                                                as "contractStatus",             --  合同状态
+               T.CREATED_BY                                                                       as "createBy",                   --  创建人
+               T.CREATION_DATE                                                                    as "createTime",                 --  创建时间
+               T.LAST_UPDATE_BY                                                                   as "updateBy",                   --  修改人
+               T.LAST_UPDATE_DATE                                                                 as "updateTime",                 --  修改时间
+               '0'                                                                                as "delFlag",                    --  删除标识
+               '5'                                                                                as "type",                       --  合同分类
+               T.TOTAL_AMOUNT                                                                     as "actualContractAmount"        --  合同真实金额
+        FROM AHZH_USER.SA_KACONTRACT_BILL_HEAD T
+        WHERE T.STAT != 99
+    </select>
+
+    <select id="selectPayPlanContract" resultType="java.util.Map">
+        SELECT T.PLAN_PAY_AMOUNT            AS "planAmount",       -- 计划收款金额
+               ''                           AS "proportion",--  收款比例
+               ''                           AS "receivablesType",--  收款类型
+               ''                           AS "receivablesTypeId",--  收款类型ID
+               T.PLAN_PAY_TIME              AS "estimateTime",     --  预计收款时间
+               ''                           AS "remark",--  备注
+               T.SA_KACONTRACT_BILL_HEAD_ID AS "contractId",       --  合同ID
+               ''                           AS "partnerId",--  合伙人ID
+               T.SA_KACONTRACT_BILL_LINE_ID AS "receivablesPlanId",--  收款计划ID
+               ''                           AS "createTime",--  创建时间
+               '0'                          AS "delFlag",--  删除标识
+               ''                           AS "createBy",--  创建人
+               ''                           AS "createTime",--  创建时间
+               ''                           AS "updateTime",--  修改时间
+               ''                           AS "updateBy"--  修改人
+        FROM AHZH_USER.SA_KACONTRACT_BILL_LINE T
+    </select>
+</mapper>

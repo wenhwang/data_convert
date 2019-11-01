@@ -1,0 +1,829 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.financial.FinancialMapper">
+
+    <resultMap id="FinanceReimbursement" type="com.example.module.financial.model.FinanceReimbursement" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <!--报销单-->
+    <select id="selectExpenseSheet" resultMap="FinanceReimbursement">
+         SELECT T.BX_ID                   AS "reimbursementId",    -- 报销id
+               T.BX_NO                   AS "sysNumber",          --  报销单号
+               BUD_TYPE_ID             AS "typeId",             --   报销类别ID
+               BUD_TYPE_NAME           AS "typeName",           --   报销类别名称
+               FEE_APPLY_NO            AS "applyNumber",        --  费用申请单号
+               CHAP_NAME               AS "applyUser",          --  申请人
+               ORG_ID                  AS "departmentId",       --   申请部门ID
+               ORG_NAME                AS "departmentName",     --   申请部门名称
+               BASE_BALANCE_TYPE_ID    AS "settlementWayId",    --  结算方式id
+               (SELECT BALANCE_TYPE_NAME FROM  AHZH_USER.  BASE_BALANCE_TYPE T2 WHERE T2.BASE_BALANCE_TYPE_ID = T.BASE_BALANCE_TYPE_ID)       AS "settlementWay",      --  结算方式
+               PROJECT_ID              AS "projectId",          --  项目id
+               (SELECT T2.PROJECT_NAME FROM  AHZH_USER. VIEW_PROJECT_BASE T2 WHERE T.PROJECT_ID = T2.PROJECT_ID )   AS "projectName",        --  项目名称
+               ''                      AS "projectBalance",     --   项目余额
+               (SELECT T2.PARTNER_ID FROM  AHZH_USER. VIEW_PROJECT_BASE T2 WHERE T.PROJECT_ID = T2.PROJECT_ID )     AS "partnerId",          --  合伙人id
+               (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T.PROJECT_ID = T2.PROJECT_ID )        AS "partnerName",        --  合伙人名称
+               BANK_CODE               AS "accountName",        --  开户名称
+               BANK_NAME               AS "bankName",           --   开户银行
+               BANK_ACCNO              AS "bankAccount",        --  开户账号
+               TOTAL_ALLOW_AMT        AS "applyAmount",        --  申请金额
+               TT.AMOUNT_CREDIT       AS "actualPaymentAmount", --实际付款金额
+               ''                      AS "areaName",           --   所属区域名称
+               PURPOSE                 AS "purpose",            --  用途
+               ''                      AS "files",              --  附件集合
+               '0'                     AS "delFlag",            --  是否删除
+               DECODE(T.STAT,3,'0',1,'0',99,'4',5,'3','')   AS "status", --状态
+               CREATOR                 AS "createBy",           --   创建人
+               UPDATOR                 AS "updateBy",           --   修改人
+               CREATE_TIME             AS "createTime",         --   创建时间
+               UPDATE_TIME             AS "updateTime"          --   修改时间
+          FROM  AHZH_USER.FIN_FEE_BX_HEADER T,
+          (SELECT BILL_NO BX_NO, SUM(HEAD.AMOUNT_CREDIT) AMOUNT_CREDIT
+          FROM  AHZH_USER.FIN_PAYING_VOUCHER HEAD
+         WHERE STAT = 5
+           AND HEAD.SYSCREATE_TYPE = 4
+         GROUP BY BILL_NO) TT
+         WHERE T.BX_NO = TT.BX_NO(+)
+    </select>
+
+    <select id="selectExpenseCostList" resultType="com.example.module.financial.model.MapCostList">
+        SELECT ''               AS "addDate",               --  发生日期
+               FEE_ID           AS "costTypeId",            --  费用类别ID
+               FEE_NAME         AS "costTypeName",          --  费用类别名称
+               ''               AS "reimbursementUserName", --  实际报销人账号
+               USEOBJECT_NAME   AS "reimbursementRealName", --  实际报销人真实姓名
+               FEE_ORG_ID       AS "bearDepartmentId",      --  承担部门ID
+               FEE_ORG_NAME     AS "bearDepartmentName",    --  承担部门名称
+               ALLOW_BX_AMT      AS "applyAmount",          --  申请金额
+               ''               AS "taxRate",               --  可抵扣税率
+               ''               AS "taxAmount"              --  可抵扣税额
+          FROM  AHZH_USER.FIN_FEE_BX_LINE T
+          WHERE T.BX_ID = TO_NUMBER(#{bxId})
+    </select>
+
+    <!--   TODO:需确认  -->
+    <resultMap id="FinanceRepayment" type="com.example.module.financial.model.FinanceRepayment" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectRepayment" resultMap="FinanceRepayment">
+       SELECT T.PAYMENT_TYPE,
+              FD_PAYMENT_BILL_ID AS "reimbursementId", -- 报销id
+              ORDINAL_NO         AS "sysNumber", --  报销单号
+              REPAYMENT_NAME                 AS "applyUser", --  申请人
+              DECODE(T.PAYMENT_TYPE ,
+                   2, (SELECT T2.DEPT_ID FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   3, (SELECT T2.DEPT_ID FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   4, (SELECT T2.DEPT_ID FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   5, ( SELECT T2.ORG_ID FROM  AHZH_USER.EMPLOYEE_HEADER T2 WHERE T.REPAYMENT_ID = T2.EMPLOYEE_ID),
+                   '')                 AS "departmentId", --   申请部门ID
+              DECODE(T.PAYMENT_TYPE ,
+                   2, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   3, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   4, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   5, (SELECT T2.ORG_NAME  FROM  AHZH_USER.EMPLOYEE_HEADER T2 WHERE T.REPAYMENT_ID = T2.EMPLOYEE_ID),
+                   '')                 AS "departmentName", --   申请部门名称
+              ''                 AS "repaymentWayId", --   还款方式id
+              ''                 AS "repaymentWay", --   还款方式
+              ''                 AS "repaymentName", --  收款名称
+              ''                 AS "repaymentBank", --  收款银行
+              RECEIVABLES_ACCOUNT_NAME AS "repaymentAccount", --   收款账号
+              ''                       AS "applyAmount", --  申请还款金额
+              AMOUNT_PAYMENT          AS "actualAmount", --   实际还款金额
+              ''                                         AS "currencyTypeId", --   币种id
+              ''                                         AS "currencyTypeName", --   币种名称
+              DOCKET                                     AS "remarks", --  摘要
+              ''                                         AS "files", --  附件集合
+              '0'                                         AS "delFlag", --  是否删除
+              CREATED_BY                                 AS "createBy", --    创建人
+              LAST_UPDATED_BY                            AS "updateBy", --    修改人
+              CREATION_DATE             AS  "createTime",--  创建时间
+              LAST_UPDATE_DATE          AS  "updateTime" --  修改时间
+         FROM  AHZH_USER.FD_PAYMENT_BILL T
+    </select>
+
+    <!--备用金-->
+    <resultMap id="FinanceReserveFund" type="com.example.module.financial.model.FinanceReserveFund" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectReserveFund" resultMap="FinanceReserveFund">
+        SELECT LOAN_ID            AS "reimbursementId",             --  报销ID
+               LOAN_NO            AS "sysNumber",                   --  报销单号
+               BUSINESS_TYPE      AS "imprestTypeId",               --  备用金类型ID
+               (SELECT PAYMENT_TYPE_NAME FROM  AHZH_USER.FD_PAYMENT_TYPE T2 WHERE T2.FD_PAYMENT_TYPE_ID = T.RECEIVER_ID) AS "imprestTypeName", --  备用金类型
+               (SELECT USERID FROM AHZH_USER.CPCUSER WHERE SYSUSERID = CHAP_ID)            AS "applyUser",                      --  申请人
+               ORG_ID             AS "departmentId",                   --  申请部门ID
+               ''                 AS "departmentName",                 --  申请部门名称
+               ''                 AS "currencyTypeId",                 --  币种ID
+               ''                 AS "currencyTypeName",               --  币种名称
+               TOTAL_ALLOW_AMT  AS "applyAmount",                --  申请金额
+               ''                                           AS "paymentName",                --  付款名称
+               ''                                           AS "paymentBank",                --  付款银行
+               ''                                           AS "paymentAccount",             --  付款账号
+               BANK_CODE                                    AS "repaymentName",              --  收款名称
+               BANK_NAME                                    AS "repaymentBank",              --  收款银行
+               BANK_ACCNO                                   AS "repaymentAccount",           --  收款账号
+               FEE_ORG_ID                                   AS "companyId",                  --  费用承担单位ID
+               (SELECT ORGNAME FROM  AHZH_USER.CPCORG T2 WHERE T2.ORGID = T.FEE_ORG_ID )     AS "companyName",  --  费用承担单位名称
+               '中徽机电科技股份有限公司'                   AS "accountSubject",             --  帐套主体
+               LOAN_PURPOSE                                 AS "remarks",                    --  用途
+               ''                                           AS "files",                      --  附件集合
+               '0'                                           AS "delFlag",                   --  是否删除
+               DECODE(T.STAT,3,'0',1,'0',99,'4',5,'3','')   AS "status", --状态
+               CREATOR                                      AS "createBy",                   --  创建人
+               UPDATOR                                      AS "updateBy",                   --  修改人
+               CREATE_TIME     AS  "createTime", --  创建时间
+               UPDATE_TIME  AS  "updateTime",-- 修改时间
+               (SELECT  AMOUNT_CREDIT -- 实际付款金额
+                 FROM  AHZH_USER.FIN_PAYING_VOUCHER T2
+             WHERE STAT = 5
+               AND T2.SYSCREATE_TYPE = 6 AND T2.BILL_NO = T.LOAN_NO ) AS "approveAmount"
+          FROM  AHZH_USER.MKT_LOAN_HEADER T
+
+    </select>
+
+    <resultMap id="FinanceCapitalAccount" type="com.example.module.financial.model.FinanceCapitalAccount" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectCapitalAccount" resultMap="FinanceCapitalAccount">
+            SELECT
+                FD_FUND_ACCOUNT_ID AS "accountId", --   资金账号ID
+                FUND_ACCOUNT_NAME AS "bankAccountName", --      银行账户名称
+                FUND_ACCOUNT_CODE    AS "sysNumber", --      银行账户编码
+                ACCOUNT    AS "bankAccount", --      银行账号
+                ''     AS "bankName", --       银行网点名称
+                ''     AS "currency", --       记账货币
+                ''     AS "currencyCode", --       记账货币编码
+                FUND_ACCOUNT_PROPERTY    AS "accountTypeId", --      账户资金类型id
+                DECODE(FUND_ACCOUNT_PROPERTY,11,'现金',
+                                             12,'备用金',
+                                             21,'基本户',
+                                             22,'保证金户',
+                                             23,'一般户',
+                                             31,'银行承兑汇票(三方)',
+                                             32,'银行承兑汇票(两方)',
+                                             33,'商业承兑汇票'
+                                             ,'')     AS "accountType", --      账户资金类型
+                FUND_ACCOUNT_TYPE   AS "bankAccountTypeId", --      银行账户类型id
+                DECODE(FUND_ACCOUNT_TYPE,'C','现金帐户','B','银行帐户','')     AS "bankAccountType", --      银行账户类型
+                ''     AS "partnerId", --      合伙人id
+                ''     AS "partnerName", --      合伙人名称
+                ''     AS "businessUserName", --       业务员账号
+                ''     AS "businessRealName", --       业务员姓名
+                ''     AS "businessDeptId", --       业务员部门id
+                ''     AS "businessDept", --       业务员部门名称
+                DECODE(IS_NEGATIVE,1,'1',2,'0',IS_NEGATIVE)    AS "isNegative", --       是否允许负数
+                DECODE(FUND_ACCOUNT_STATUS,1,'1',2,'0',FUND_ACCOUNT_STATUS)    AS "status", --       状态
+                ''     AS "remarks", --      备注
+                ''     AS "startDate", --      启用日期
+                ''     AS "freezeDate", --       冻结日期
+                ''     AS "cancelDate", --       注销日期
+                ''     AS "delFlag", --      是否删除
+                CREATED_BY     AS "createBy", --       创建人
+                LAST_UPDATED_BY    AS "updateBy", --       修改人
+                LAST_UPDATE_DATE     AS "createTime", --       创建时间
+                CREATION_DATE    AS "updateTime" --       修改时间
+              FROM  AHZH_USER.FD_FUND_ACCOUNT
+    </select>
+
+    <!-- 外经证-->
+    <resultMap id="FinanceBusinessLicense" type="com.example.module.financial.model.FinanceBusinessLicense" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectBusinessLicense" resultMap="FinanceBusinessLicense">
+         SELECT DIFF_AREA_VAT_APPLY_ID       AS "businessLicenseId", --   外经证ID
+                APPLY_BILL_NO                AS "sysNumber", --     外经证编号
+                T.PROJECT_ID                 AS "projectId", --     项目id
+                (SELECT T2.PROJECT_NAME
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "projectName", --     项目名称
+                (SELECT T2.PROJECT_CODE
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "projectNumber", --     项目编号
+                TT.PROJECT_CONTRACT_ID                AS "contractId", --      合同ID
+                TT.PROJECT_CONTRACT_CODE              AS "contractName", --      合同名称
+                TT.PROJECT_CONTRACT_NAME              AS "contractNumber", --      合同编号
+                TT.CONTRACT_AMOUNT                    AS "contractAmount", --      合同金额
+                (SELECT T2.HOLDER_ID
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "ownerId", --     业主id
+                (SELECT T2.HOLDER
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "ownerName", --     业主名称
+                (SELECT T2.PARTNER_ID
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+                (SELECT T2.PARTNER
+                FROM  AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerName", --     合伙人名称
+                APPLY_DATE                            AS "applyDate", --     申请日期
+                APPLY_PEOPLE                          AS "applyUser", --     申请人
+                USER_PEOPLE                           AS "receiveUser", --     领用人
+                DECODE(IS_PRINT_INVOICE,0,'3',1,'6',2,'10','') AS "status", -- 外经证状态
+                AREA_ID                               AS "address", --     外经证开具地址
+                ''                                    AS "taxBureauName", --     完税税务局名称
+                TTT.DIFF_AREA_VAT_AMOUNT              AS "overOpenAmount", --      已开具金额
+                T.DIFF_AREA_VAT_AMOUNT                AS "applyOpenAmount", --     申请开具金额
+                T.DIFF_AREA_VAT_AMOUNT                AS "actualOpenAmount", --      实际开具金额
+                ''                                    AS "totalOpenAmount", --     累计开具金额
+                DIFF_AREA_VAT_NO                      AS "businessLicenseNumber", --     外经证编码
+                END_DATE                              AS "endDate", --     有效期
+                ''                                    AS "files", --     附件集合
+                APPLY_NOTE                            AS "remarks", --     备注
+                '0'                                   AS "delFlag", --     是否删除
+                CREATE_BY                             AS "createBy", --      创建人
+                LAST_UPDATE_BY                        AS "updateBy", --      修改人
+                CREATE_DATE                           AS "createTime", --      创建时间
+                LAST_UPDATE_DATE                      AS "updateTime" --      修改时间
+                FROM  AHZH_USER.FD_DIFF_AREA_VAT_APPLY T,
+                (SELECT PROJECT_ID,
+                PROJECT_CONTRACT_ID,
+                PROJECT_CONTRACT_CODE,
+                PROJECT_CONTRACT_NAME,
+                CONTRACT_AMOUNT
+        FROM  AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL) TT,
+            (SELECT PROJECT_ID, SUM(DIFF_AREA_VAT_AMOUNT) AS DIFF_AREA_VAT_AMOUNT
+            FROM  AHZH_USER.FD_DIFF_AREA_VAT_APPLY
+            WHERE IS_PRINT_INVOICE != 0
+            GROUP BY PROJECT_ID) TTT
+        WHERE  TT.PROJECT_ID(+) = T.PROJECT_ID
+        AND TTT.PROJECT_ID(+) = T.PROJECT_ID
+    </select>
+
+    <!-- 收票-->
+    <resultMap id="FinanceReceiveInvoice" type="com.example.module.financial.model.FinanceReceiveInvoice" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectReceiveInvoice" resultMap="FinanceReceiveInvoice">
+        SELECT T.INPUT_INVOICE_HEAD_ID          AS "receiveInvoiceId",        --   收票id
+         T.BILL_NO                      AS "sysNumber",--收票编号
+         T.PROJECT_ID                     AS "projectId",               --     项目id
+         (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)  AS "projectName",             --     项目名称
+         T.PUR_CONTRACT_ID                AS "contractId",              --      合同id
+         (SELECT T2.PROJECT_CONTRACT_NAME FROM  AHZH_USER. EPM_PROJECT_CONTRACT T2 WHERE T2.PROJECT_CONTRACT_ID = T.PUR_CONTRACT_ID)    AS "contractName",            --      合同名称
+         T.PUR_CONTRACT_CODE              AS "contractNumber",          --      合同编号
+         (SELECT T2.CONTRACT_AMOUNT FROM  AHZH_USER. EPM_PROJECT_CONTRACT T2 WHERE T2.PROJECT_CONTRACT_ID = T.PUR_CONTRACT_ID)    AS "contractAmount",          --     合同金额
+         ''                             AS "settlementWayId",         --     结算方式ID
+         ''                             AS "settlementWayName",       --     结算方式名称
+         ''                             AS "settlementAmount",        --      结算金额
+         ''                             AS "typeId",                  --      发票种类ID
+         ''                             AS "typeName",                --      发票种类名称
+         (SELECT T2.VENDOR_NAME FROM  AHZH_USER.VENDOR T2 WHERE T2.VENDOR_ID = T.VENDOR_ID)     AS "company",                 --     开票单位
+         T.INVOICE_CLASS           AS "businessTypeId",                 --      发票业务类型ID
+         DECODE(T.INVOICE_CLASS,1,'材料', 2,'费用',3,'劳务',INVOICE_CLASS)    AS "businessTypeName",               --      发票业务类型名称
+         ''                      AS "taxRate",                        --     税率
+         T.INVOICE_QTY             AS "number",                         --      发票张数
+         T.INVOICE_AMOUNT         AS "invoiceAmount",                  --     本次收票金额
+         T.TAX_AMOUNT             AS "taxAmount",                      --     本次收票税额
+         TT.INVOICE_AMOUNT                      AS "alreadyReceiveAmount",           --      已收票金额
+         ''                      AS "totalReceiveAmount",             --      累计收票金额
+         ''                      AS "isPurchase",                     --      是否实采
+         ''                      AS "isPush",                         --      是否推送付款申请单
+         T.BILL_DATE               AS "applyDate",                      --     申请日期
+         T.OPERATOR                AS "applyUser",                      --     申请人
+         (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+         (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+         ''                      AS "settlementFiles",                --     结算单附件集合
+         ''                      AS "otherFiles",                     --      其他附件集合
+         ''                      AS "invoiceList",                    --     发票集合
+         T.REMARK                  AS "remarks",                        --     备注
+         '0'                      AS "delFlag",                        --     是否删除
+         DECODE(T.STAT,3,'0',1,'0',99,'5',5,'4','')       AS "status", --状态
+         T.CREATE_BY               AS "createBy",                       --      创建人
+         T.LAST_UPDATE_BY          AS "updateBy",                       --      修改人
+         T.CREATE_DATE             AS "createTime",                     --      创建时间
+         T.LAST_UPDATE_DATE        AS "updateTime",                     --      修改时间
+         ''                      AS "openWayName"                     --     开具方式名称
+    FROM  AHZH_USER.FD_INPUT_INVOICE_HEAD T,
+    (SELECT HEAD.PUR_CONTRACT_CODE,
+           SUM(HEAD.INVOICE_AMOUNT) AS INVOICE_AMOUNT
+      FROM  AHZH_USER.VIEW_INPUTINVOICEDETAIL HEAD
+   GROUP BY PUR_CONTRACT_CODE) TT
+   WHERE T.PUR_CONTRACT_CODE = TT.PUR_CONTRACT_CODE(+)
+    </select>
+
+    <select id="selectReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+        SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
+               INVOICE_TYPE          AS "typeId", --发票类型ID
+               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                   2,'普通发票(纸)',
+                                   3,'专用发票（电）',
+                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
+               INVOICE_DATE    AS "invoiceDate", --发票日期
+               '' AS "deductTaxAmount", --除税金额
+               TAX_AMOUNT        AS "taxAmount", --税额
+               INVOICE_AMOUNT AS "totalAmount" --价税合计
+          FROM  AHZH_USER.FD_INPUT_INVOICE_LINE T
+          WHERE T.INPUT_INVOICE_HEAD_ID =TO_NUMBER(#{receiveInvoiceId})
+    </select>
+
+    <!-- 开票-->
+    <resultMap id="FinanceOpenInvoice" type="com.example.module.financial.model.FinanceOpenInvoice" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectOpenInvoice" resultMap="FinanceOpenInvoice">
+        SELECT T.OUTPUT_INVOICE_APPLY_ID            AS "openInvoiceId",       --   开票ID
+               T.APPLY_BILL_NO                      AS "sysNumber",           --   开票编号
+               ''                                 AS "statementId",         --   结算单id
+               ''                                 AS "statementNumber",     --   结算单号
+               T.PROJECT_ID                         AS "projectId",           --   项目id
+               (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)   AS "projectName",         --   项目名称
+               T.APPLY_DATE     AS "applyDate",           --   申请日期
+               T.APPLY_PEOPLE                       AS "applyUser",           --   申请人
+               ''                                 AS "companyName",         --   开票单位名称
+               TT.PROJECT_CONTRACT_ID                                 AS "contractId",          --    合同id
+               TT.PROJECT_CONTRACT_NAME                                 AS "contractName",        --    合同名称
+               TT.CONTRACT_AMOUNT                                 AS "contractAmount",      --    项目合同金额
+               T.INVOICE_TYPE                       AS "typeId",              --    发票类型ID
+               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                   2,'普通发票(纸)',
+                                   3,'专用发票（电）',
+                                   4,'普通发票(电)','')  AS "typeName",            --    发票类型名称
+               ''                                 AS "businessTypeId",      --   发票业务类型ID
+               ''                                 AS "businessTypeName",    --    发票业务类型名称
+               ''                                 AS "payWayId",            --    支付方式Id
+               ''                                 AS "payWay",              --    支付方式
+               ''                                 AS "overInvoiceAmount",   --   已开票金额
+               T.APPLY_AMOUNT   AS "applyInvoiceAmount",  --    申请开票金额
+               ''                                 AS "actualInvoiceAmount", --   实际开票金额
+               ''                                 AS "totalInvoiceAmount",  --    累计开票金额
+               T.TAX_RATE                           AS "taxRate",             --   税率
+               (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+               (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+               ''                                 AS "invoiceBasis",        --    开票依据
+               ''                                 AS "isPush",              --    是否推送到收款申请单
+               ''                                 AS "files",               --   附件集合
+               T.REMARK                             AS "remarks",             --   备注
+               '0'                                AS "delFlag",             --   是否删除
+               (CASE
+                 WHEN T.STAT = 1 THEN '0'
+                 WHEN T.STAT = 3 THEN '0'
+                 WHEN T.STAT = 99 THEN '5'
+                 WHEN T.STAT = 5 AND T.IS_PRINT_INVOICE = 1 THEN '2'
+                 WHEN T.STAT = 5 AND T.IS_PRINT_INVOICE = 2 THEN '4'
+                 ELSE ''
+                END)  AS "status", --状态 是否已开票(1|否、2|是)
+               T.CREATE_BY                          AS "createBy",            --    创建人
+               T.LAST_UPDATE_BY                     AS "updateBy",            --    修改人
+               T.CREATE_DATE      AS "createTime",          --    创建时间
+               T.LAST_UPDATE_DATE   AS "updateTime"           --    修改时间
+          FROM  AHZH_USER.FD_OUTPUT_INVOICE_APPLY T,
+            (SELECT PROJECT_ID,
+                 PROJECT_CONTRACT_ID,
+                 PROJECT_CONTRACT_CODE,
+                 PROJECT_CONTRACT_NAME,
+                 CONTRACT_AMOUNT
+            FROM  AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL) TT
+           WHERE T.PROJECT_ID = TT.PROJECT_ID(+)
+    </select>
+
+    <!--开票明细-->
+    <select id="selectOpenInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+          SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
+               INVOICE_TYPE          AS "typeId", --发票类型ID
+               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                   2,'普通发票(纸)',
+                                   3,'专用发票（电）',
+                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
+               INVOICE_DATE    AS "invoiceDate", --发票日期
+               '' AS "deductTaxAmount", --除税金额
+               TAX_AMOUNT        AS "taxAmount", --税额
+               INVOICE_AMOUNT  AS "totalAmount" --价税合计
+          FROM  AHZH_USER.FD_OUTPUT_INVOICE_LIST T
+          WHERE T.OUTPUT_INVOICE_APPLY_ID  =TO_NUMBER(#{openInvoiceId})
+    </select>
+
+    <resultMap id="FinanceReceivables" type="com.example.module.financial.model.FinanceReceivables" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectReceivablese" resultMap="FinanceReceivables">
+          SELECT T2.FIN_RECEIPT_VOUCHER_ID          AS "receivablesId",       --   收款单ID
+                   T.ORDINAL_NO                     AS "sysNumber",           --    收款单编号
+                   T.PROJECT_ID                     AS "projectId",           --    项目id
+                   (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)     AS "projectName",         --    项目名称
+                   (SELECT PROJECT_CODE FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)     AS "projectCode",         --    项目编码
+                   ''                             AS "contractId",          --     合同ID
+                   ''                             AS "contractName",        --     合同名称
+                   ''                             AS "contractNumber",      --     合同编号
+                   ''                             AS "contractAmount",      --     合同金额
+                   DECODE(T3.PAYMENT_TYPE_NAME,'收其他款项','收其他经营活动款',
+                                          '收投标保证金','收投标保证金',
+                                          '收履约保证金','收履约保证金',
+                                          '收投资款','收投资款',
+                                          '收到调拨款','收其他经营活动款',
+                                          '公司借入','借款（外部汇入）',
+                                          '收工程款','收工程回款',
+                                          '收年费','收年费',
+                                          '收管理费','扣管理费',''
+                                          )  AS "receivablesTypeId",   --    收款类型id
+                    T3.PAYMENT_TYPE_NAME          AS "receivablesTypeName", --    收款类型名称
+                   ''                             AS "typeId",              --     款项类别id
+                   ''                             AS "typeName",            --     款项类别名称
+                   ''                             AS "receivablesCompany",  --     收款单位
+                   ''                             AS "receivablesAccount",  --     收款账户
+                   ''                             AS "receivablesBank",     --    收款银行
+                   T.RECEIVER_NAME                  AS "payCompany",          --     付款单位
+                   ''                             AS "payAccount",          --     付款账户
+                   ''                             AS "payBank",             --    付款银行
+                   ''                             AS "totalInvoiceAmount",  --     累计开票金额
+                   ''                             AS "totalSettlementAmount",      --    累计结算金额
+                   ''                             AS "estimateReceivablesAmount", --    计划收款金额
+                   ''                             AS "totalReceivablesAmount",    --     累计收款金额
+                   T.RECEIPT_AMOUNT                 AS "actualReceivablesAmount",   --    实际收款金额
+                   T.DATE_FUND                     AS "actualReceivablesDate",     --    实际收款日期
+                   (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+                   (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+                   ''                             AS "applyDate",                 --    申请日期
+                   (SELECT wm_concat(PAYMENT_BY)  FROM  AHZH_USER.FIN_RECEIPT_VOUCHER_LINE T4 WHERE T4.FIN_RECEIPT_VOUCHER_ID in T2.FIN_RECEIPT_VOUCHER_ID )  AS "applyUser",  --    申请人
+                   ''                             AS "accountSubject",            --     账套主体
+                   ''                             AS "files",                     --    附件集合
+                   ''                             AS "abstract",                  --     摘要
+                   (SELECT NOTE FROM  AHZH_USER.FIN_RECEIPT_VOUCHER T2 WHERE T.ORDINAL_NO = T2.ORDINAL_NO)    AS "remarks",                   --    备注
+                   ''                             AS "isPush",                    --     是否推送开票申请单
+                   '0'                             AS "delFlag",                   --    是否删除
+                   (SELECT CREATED_BY FROM  AHZH_USER.FIN_RECEIPT_VOUCHER T2 WHERE T.ORDINAL_NO = T2.ORDINAL_NO)                     AS "createBy",                  --     创建人
+                   (SELECT LAST_UPDATED_BY FROM  AHZH_USER.FIN_RECEIPT_VOUCHER T2 WHERE T.ORDINAL_NO = T2.ORDINAL_NO)                AS "updateBy",                  --     修改人
+                   (SELECT CREATION_DATE    FROM  AHZH_USER.FIN_RECEIPT_VOUCHER T2 WHERE T.ORDINAL_NO = T2.ORDINAL_NO)                  AS "createTime",                --     创建时间
+                   (SELECT LAST_UPDATE_DATE  FROM  AHZH_USER.FIN_RECEIPT_VOUCHER T2 WHERE T.ORDINAL_NO = T2.ORDINAL_NO)               AS "updateTime"                 --     修改时间
+              FROM  AHZH_USER.VIEW_DINGTALK_RECEIPT_VOUCHER T,
+                   AHZH_USER.FIN_RECEIPT_VOUCHER T2,
+                   AHZH_USER.FD_PAYMENT_TYPE T3
+              WHERE T.ORDINAL_NO = T2.ORDINAL_NO(+)
+              AND T2.BUSINESS_TYPE = T3.FD_PAYMENT_TYPE_ID
+
+    </select>
+
+    <resultMap id="FinanceAdjustment" type="com.example.module.financial.model.FinanceAdjustment" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectAdjustment" resultMap="FinanceAdjustment">
+        SELECT PROJECT_BALANCE_CHANGE_ID            AS "adjustmentId", -- 调整单ID
+               BALANCE_CHANGE_NO                    AS "sysNumber", --  调整单业务号
+               PROJECT_ID                           AS "projectId", --  项目ID
+               (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID), --  项目名称
+               ''      AS "typeId", --  业务类型ID
+               ''      AS "typeName", --  业务类型名称
+               ''      AS "companyName", --  单位名称
+               ACCT_BLNC_FIELD_NAME      AS "objectId", --  调整对象ID
+              DECODE(ACCT_BLNC_FIELD_NAME,
+                       'OUTPUT_INVOICE_AMOUNT','累计开票金额(开给业主方的发票金额)',
+                        'INPUT_INVOICE_AMOUNT','累计收票金额(收到合伙人的发票金额)',
+                        'PROJECT_INVEST_AMOUNT','项目投资金额(收到合伙人投资款)',
+                        'PROJECT_RECEIVE_AMOUNT','项目回款金额(收到业主方款项)',
+                        'PROJECT_PAYMENT_AMOUNT','项目支付金额(支付给合伙人)',
+                        'WITHHOLD_MANAGEMENT_AMOUNT','项目扣款金额(管理费)',
+                        'WITHHOLD_TAX_AMOUNT','项目扣款金额(税费)',
+                        'WITHHOLD_OTHER_AMOUNT','项目扣款金额(其他)',
+                        'PROJECT_FINE_AMOUNT','项目罚款金额',
+                        'OUTPUT_VAT_AMOUNT','销项票税额(开给业主方的发票的税额)',
+                        'INPUT_VAT_AMOUNT','进项票税额(收到合伙人的发票的税额)',
+                        'DIFF_AREA_VAT_AMOUNT','外经证税额',
+                        'LOAN_AMOUNT','公司借入',
+                        'TRANSFER_IN_AMOUNT','往来调拨收款',
+                        'TRANSFER_OUT_AMOUNT','往来调拨付款',
+                        'AGENT_PURCHASE_OUT_AMOUNT','代采购付款',
+                        'WITHHOLD_YEAR_AMOUNT','项目扣款金额(年费)',
+                        'IN_MARGIN_AMOUNT','收保证金',
+                        'OUT_MARGIN_AMOUNT','付保证金',
+                        'OTHER_IN_AMOUNT','其他回款',
+                        'OTHER_OUT_AMOUNT','其他付款',
+                        'BORROW_AMOUNT','公司借支',''
+               ) AS "objectName",--  调整对象
+               ''                     AS "overObject", --  调整前对象
+               ''                     AS "afterObject", --  调整后对象
+               APPLY_DATE               AS "applyDate", --  申请日期
+               ''                     AS "applyUser", --  申请人
+               ''                     AS "applyDepartmentId", --  申请部门ID
+               ''                     AS "applyDepartmentName", --  申请部门名称
+               CHANGE_AMOUNT          AS "amount", --  调整金额
+               ''                     AS "accountSubject", --  账套主体
+               ''                     AS "files", --  附件集合
+               REMARK                 AS "remarks", --  备注
+               '0'                    AS "delFlag", --  是否删除
+               CREATE_BY              AS "createBy", -- 创建人
+               LAST_UPDATED_BY        AS "updateBy", -- 修改人
+               CREATE_DATE             AS "createTime", --  创建时间
+               LAST_UPDATE_DATE        AS "updateTime" --  修改时间
+          FROM  AHZH_USER.EPM_PROJECT_BALANCE_CHANGE T
+    </select>
+
+    <!-- 划款（扣款）-->
+    <resultMap id="FinanceDrawMoney" type="com.example.module.financial.model.FinanceDrawMoney" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectDrawMoney" resultMap="FinanceDrawMoney">
+            SELECT T.PROJECT_KK_APPLY_HEAD_ID            AS "drawMoneyId", --   划款单ID
+                   T.PROJECT_KK_APPLY_NO        AS "sysNumber", --    划款单编号
+                   T.PROJECT_ID                 AS "projectId", --    项目id
+                   (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)  AS "projectName", --    项目名称
+                   ''                         AS "contractId", --     合同ID
+                   ''                         AS "contractName", --     合同名称
+                   (SELECT T2.PARTNER  FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)   AS "payCompany", --     划款单位
+                   ''                         AS "payAccount", --     划款单位账户
+                   ''                         AS "payBank", --    划款单位银行
+                   ''                         AS "receivablesCompany", --     收款单位
+                   ''                         AS "receivablesAccount", --     收款账户
+                   ''                         AS "receivablesBank", --    收款银行
+                   ''                         AS "actualPaymentDate", --    实际付款日期
+                   ''                         AS "accountSubject", --     账套主体
+                   TT.APPROVED_AMOUNT         AS "applyAmount", --    申请划款金额
+                   TT.APPROVED_AMOUNT         AS "actualPaymentAmount", --    实际划款金额
+                   TT.CHARGE_TYPE                AS "moneyCategoryId", --    款项类别id
+                   DECODE(TT.CHARGE_TYPE,
+                         'WITHHOLD_YEAR_AMOUNT','年费',
+                         'WITHHOLD_MANAGEMENT_AMOUNT','管理费',
+                         'WITHHOLD_TAX_AMOUNT','税费',
+                         'WITHHOLD_OTHER_AMOUNT','其他','') AS "moneyCategoryName", --    款项类别名称
+                   ''                         AS "moneyTypeId", --    款项类型id
+                   ''                         AS "moneyTypeName", --    款项类型名称
+                   (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+                   (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+                   T.APPLY_PEOPLE               AS "applyUser", --    申请人
+                   ''                           AS "files", --    附件集合
+                   T.REMARK                     AS "remarks", --    备注
+                   '0'                         AS "delFlag", --    是否删除
+                   DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')    AS "status",-- 单据状态
+                   T.CREATE_BY                  AS "createBy", --     创建人
+                   T.LAST_UPDATE_BY             AS "updateBy", --     修改人
+                   T.CREATE_DATE               AS "createTime", --     创建时间
+                   T.LAST_UPDATE_DATE           AS "updateTime" --    修改时间
+              FROM  AHZH_USER.EPM_PROJECT_KK_APPLY_HEAD T, AHZH_USER.EPM_PROJECT_KK_APPLY_LINE TT
+             WHERE T.PROJECT_KK_APPLY_HEAD_ID = TT.PROJECT_KK_APPLY_HEAD_ID
+    </select>
+
+    <!--付款（确认付款）-->
+    <resultMap id="FinancePayment" type="com.example.module.financial.model.FinancePayment" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+    <select id="selectPayingVoucher" resultMap="FinancePayment">
+      SELECT T.FIN_PAYING_VOUCHERS_ID         AS "paymentId", -- 付款单ID
+           T.ORDINAL_NO                     AS "sysNumber", --  付款编号
+           T.PROJECT_ID                     AS "projectId", --  项目id
+           (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectName", --  项目名称
+           (SELECT PROJECT_CODE FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectCode", --  项目编码
+           (SELECT AREA FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)                       AS "projectAddress", --   项目地址
+           ''                             AS "contractId", --   合同ID
+           ''                             AS "contractName", --   合同名称
+           ''                             AS "contractNumber", --   合同编号
+           ''                             AS "contractAmoun", -- t  合同金额
+           ''                             AS "payCompany", --   付款单位
+           (SELECT ACCOUNT FROM  AHZH_USER.FD_FUND_ACCOUNT T2 WHERE T2.FD_FUND_ACCOUNT_ID = T.FD_FUND_ACCOUNT_ID)                 AS "payAccount", --   付款账户
+           (SELECT FUND_ACCOUNT_NAME FROM  AHZH_USER.FD_FUND_ACCOUNT T2 WHERE T2.FD_FUND_ACCOUNT_ID = T.FD_FUND_ACCOUNT_ID)       AS "payBank", --  付款银行
+           ''                             AS "receivablesCompany", --   收款单位
+           ''                             AS "receivablesAccount", --   收款账户
+           T.DATE_FUND                      AS "receivablesBank", --  收款银行
+           ''                             AS "actualPaymentDate", --  实际付款日期
+           ''                             AS "accountSubject", --   账套主体
+           ''                             AS "settlementWayId", --  结算方式ID
+           ''                             AS "settlementWayName", --  结算方式名称
+           ''                             AS "totalInvoiceAmount", --   累计收票金额
+           ''                             AS "totalPaymentAmount", --   累计付款金额
+           T.AMOUNT_CREDIT                AS "applyPaymentAmount", --   本次申请付款金额
+           DATE_FUND                      AS "actualPaymentDate",  -- 实际付款日期
+           AMOUNT_CREDIT                  AS "actualPaymentAmount", --  实际付款金额
+           ''                             AS "settlementAmount", --   本次结算金额
+           ''                             AS "invoiceTypeId", --  发票种类id
+           ''                             AS "invoiceTypeName", --  发票种类名称
+           ''                             AS "businessTypeId", --   发票业务类型id
+           ''                             AS "businessTypeName", --   发票业务类型名称
+           ''                             AS "moneyCategoryId", --  款项类别id
+           ''                             AS "moneyCategoryName", --  款项类别名称
+           DECODE(T2.PAYMENT_TYPE_NAME,'付劳务-工程款','支付劳务款-工程款',
+           '公司借支','支付其他经营活动款',
+           '付费用-投资款','支付对外投资款',
+           '付投标保证金','支付投标保证金',
+           '付材料-工程款','支付其他经营活动款',
+           '付劳务-投资款','支付劳务款-投资款',
+           '付其他款项','支付其他经营活动款',
+           '归还公司借款','支付员工报销款',
+           '付费用-工程款','支付其他经营活动款',
+           '付履约保证金','支付履约保证金',
+           '付材料-投资款','支付对外投资款',
+           '付往来调拨款','支付其他经营活动款','') AS "moneyTypeId", --  款项类型id
+           T2.PAYMENT_TYPE_NAME           AS "moneyTypeName", --  款项类型名称
+           ''                             AS "paymentBasisId", --   付款依据id
+           ''                             AS "paymentBasisName", --   付款依据名称
+           ''                             AS "budgetTypeId", --   预算类别id
+           ''                             AS "budgetTypeName", --   预算类别名称
+           ''                             AS "payWayId", --   支付方式id
+           ''                             AS "payWayName", --   支付方式名称
+           (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+           (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+           ''                             AS "isPurchase", --   是否实采
+           ''                             AS "isComplete", --   材料是否齐全
+           (SELECT USERNAME FROM  AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.EMPLOYEE_ID)    AS "applyUser", --  申请人
+           DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')                          AS "status",
+           ''                             AS "files", --  附件集合
+           T.NOTE                           AS "remarks", --  备注
+           '0'                             AS "delFlag", --  是否删除
+           T.CREATED_BY                     AS "createBy", --   创建人
+           T.LAST_UPDATED_BY               AS "updateBy", --   修改人
+           T.CREATION_DATE                  AS "createTime", --   创建时间
+           T.LAST_UPDATE_DATE               AS "updateTime" --   修改时间
+      FROM  AHZH_USER.FIN_PAYING_VOUCHER T,
+           AHZH_USER.FD_PAYMENT_TYPE T2
+     WHERE  T2.FD_PAYMENT_TYPE_ID(+)  = T.BUSINESS_TYPE
+
+    </select>
+
+    <select id="selectProjectMarginApply" resultMap="FinancePayment">
+        SELECT T.PROJECT_MARGIN_APPLY_ID         AS "paymentId", -- 付款单ID
+               T.BILL_NO                     AS "sysNumber", --  付款编号
+               T.PROJECT_ID                     AS "projectId", --  项目id
+               (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectName", --  项目名称
+               (SELECT PROJECT_CODE FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectCode", --  项目编码
+               (SELECT AREA FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)                       AS "projectAddress", --   项目地址
+               ''                             AS "contractId", --   合同ID
+               ''                             AS "contractName", --   合同名称
+               ''                             AS "contractNumber", --   合同编号
+               ''                             AS "contractAmoun", -- t  合同金额
+               ''                             AS "payCompany", --   付款单位
+               ''                             AS "payAccount", --   付款账户
+               ''                             AS "payBank", --  付款银行
+               T.PAYEE_NAME                   AS "receivablesCompany", --   收款单位
+               T.PAYEE_ACCOUNT                AS "receivablesAccount", --   收款账户
+               T.PAYEE_BANK                   AS "receivablesBank", --  收款银行
+               ''                             AS "actualPaymentDate", --  实际付款日期
+               ''                             AS "accountSubject", --   账套主体
+               ''                             AS "settlementWayId", --  结算方式ID
+               ''                             AS "settlementWayName", --  结算方式名称
+               ''                             AS "totalInvoiceAmount", --   累计收票金额
+               ''                             AS "totalPaymentAmount", --   累计付款金额
+               T.APPLY_AMOUNT                 AS "applyPaymentAmount", --   本次申请付款金额
+               ''                             AS "actualPaymentAmount", --  实际付款金额
+               ''                             AS "settlementAmount", --   本次结算金额
+               ''                             AS "invoiceTypeId", --  发票种类id
+               ''                             AS "invoiceTypeName", --  发票种类名称
+               ''                             AS "businessTypeId", --   发票业务类型id
+               ''                             AS "businessTypeName", --   发票业务类型名称
+               ''                             AS "moneyCategoryId", --  款项类别id
+               ''                             AS "moneyCategoryName", --  款项类别名称
+               T2.PAYMENT_TYPE_NAME           AS "moneyTypeId", --  款项类型id
+               T2.PAYMENT_TYPE_NAME           AS "moneyTypeName", --  款项类型名称
+               ''                             AS "paymentBasisId", --   付款依据id
+               ''                             AS "paymentBasisName", --   付款依据名称
+               ''                             AS "budgetTypeId", --   预算类别id
+               ''                             AS "budgetTypeName", --   预算类别名称
+               ''                             AS "payWayId", --   支付方式id
+               ''                             AS "payWayName", --   支付方式名称
+               (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+               (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+               ''                             AS "isPurchase", --   是否实采
+               ''                             AS "isComplete", --   材料是否齐全
+               T.APPLY_PEOPLE    AS "applyUser", --  申请人
+               DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')                          AS "status",
+               ''                             AS "files", --  附件集合
+               T.REMARK                       AS "remarks", --  备注
+               '0'                            AS "delFlag", --  是否删除
+               T.CREATE_BY                    AS "createBy", --   创建人
+               T.LAST_UPDATE_BY               AS "updateBy", --   修改人
+               T.CREATE_DATE                  AS "createTime", --   创建时间
+               T.LAST_UPDATE_DATE             AS "updateTime" --   修改时间
+          FROM  AHZH_USER.EPM_PROJECT_MARGIN_APPLY  T,
+               AHZH_USER.FD_PAYMENT_TYPE T2
+         WHERE  T2.FD_PAYMENT_TYPE_ID(+)  = T.MARGIN_TYPE
+    </select>
+
+    <!--项目付款-->
+    <select id="selectProjectPaymentApply" resultMap="FinancePayment">
+        SELECT T.PROJECT_PAYMENT_APPLY_ID         AS "paymentId", -- 付款单ID
+               T.PROJECT_PAYMENT_APPLY_NO         AS "sysNumber", --  付款编号
+               TTT.DATE_FUND                      AS "actualPaymentDate", -- 实际付款日期
+               TTT.AMOUNT_CREDIT                  AS "actualPaymentAmount",  --  实际付款金额
+               T.PROJECT_ID                       AS "projectId", --  项目id
+               (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectName", --  项目名称
+               (SELECT PROJECT_CODE FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectCode", --  项目编码
+               (SELECT AREA FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)                       AS "projectAddress", --   项目地址
+               ''                             AS "contractId", --   合同ID
+               ''                             AS "contractName", --   合同名称
+               ''                             AS "contractNumber", --   合同编号
+               ''                             AS "contractAmoun", -- t  合同金额
+               ''                             AS "payCompany", --   付款单位
+               ''                             AS "payAccount", --   付款账户
+               ''                             AS "payBank", --  付款银行
+               T.PAYEE_NAME                   AS "receivablesCompany", --   收款单位
+               T.PAYEE_ACCOUNT                AS "receivablesAccount", --   收款账户
+               T.PAYEE_BANK                   AS "receivablesBank", --  收款银行
+               ''                             AS "actualPaymentDate", --  实际付款日期
+               ''                             AS "accountSubject", --   账套主体
+               T.BASE_BALANCE_TYPE_ID        AS "settlementWayId", --  结算方式ID
+               (SELECT T2.BALANCE_TYPE_NAME FROM  AHZH_USER.BASE_BALANCE_TYPE T2 WHERE T2.BASE_BALANCE_TYPE_ID = T.BASE_BALANCE_TYPE_ID)             AS "settlementWayName", --  结算方式名称
+               ''                             AS "totalInvoiceAmount", --   累计收票金额
+               ''                             AS "totalPaymentAmount", --   累计付款金额
+               T.APPLY_AMOUNT                   AS "applyPaymentAmount", --   本次申请付款金额
+               ''                             AS "actualPaymentAmount", --  实际付款金额
+               ''                             AS "settlementAmount", --   本次结算金额
+               ''                             AS "invoiceTypeId", --  发票种类id
+               ''                             AS "invoiceTypeName", --  发票种类名称
+               ''                             AS "businessTypeId", --   发票业务类型id
+               ''                             AS "businessTypeName", --   发票业务类型名称
+               ''                             AS "moneyCategoryId", --  款项类别id
+               ''                             AS "moneyCategoryName", --  款项类别名称
+               DECODE(TT.PAYMENT_TYPE_NAME,'付劳务-工程款','支付劳务款-工程款',
+                                  '付费用-投资款','支付投资款',
+                                  '付劳务-投资款','支付对外投资款',
+                                  '付材料-工程款','支付其他经营活动款',
+                                  '付费用-工程款','支付其他经营活动款',
+                                  '付其他款项','支付其他经营活动款',
+                                  '付材料-投资款','支付对外投资款','')      AS "moneyTypeId", --  款项类型id
+               TT.PAYMENT_TYPE_NAME           AS "moneyTypeName", --  款项类型名称
+               ''                             AS "paymentBasisId", --   付款依据id
+               ''                             AS "paymentBasisName", --   付款依据名称
+               ''                             AS "budgetTypeId", --   预算类别id
+               ''                             AS "budgetTypeName", --   预算类别名称
+               ''                             AS "payWayId", --   支付方式id
+               ''                             AS "payWayName", --   支付方式名称
+               (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+               (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+               ''                             AS "isPurchase", --   是否实采
+               ''                             AS "isComplete", --   材料是否齐全
+               T.APPLY_PEOPLE    AS "applyUser", --  申请人
+               DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')                          AS "status",
+               ''                             AS "files", --  附件集合
+               T.REMARK                           AS "remarks", --  备注
+               '0'                             AS "delFlag", --  是否删除
+               T.CREATE_BY                     AS "createBy", --   创建人
+               T.LAST_UPDATE_BY               AS "updateBy", --   修改人
+               T.CREATE_DATE                  AS "createTime", --   创建时间
+               T.LAST_UPDATE_DATE               AS "updateTime" --   修改时间
+          FROM  AHZH_USER. EPM_PROJECT_PAYMENT_APPLY  T ,
+               AHZH_USER.FD_PAYMENT_TYPE TT,
+               (SELECT BILL_ID, --付款单ID
+                       BILL_NO, --付款编号
+                       DATE_FUND, --实际付款日期
+                       AMOUNT_CREDIT -- 实际付款金额
+                  FROM  AHZH_USER.FIN_PAYING_VOUCHER HEAD
+                 WHERE STAT = 5
+                   AND HEAD.SYSCREATE_TYPE = 2) TTT
+        WHERE  TT.FD_PAYMENT_TYPE_ID(+)  = T.FD_IO_TYPE_ID
+        AND    TTT.BILL_NO(+) = T.PROJECT_PAYMENT_APPLY_NO
+
+    </select>
+
+    <select id="selectPaymentApplyHead" resultMap="FinancePayment">
+     SELECT T.PUR_PAYMENT_APPLY_HEAD_ID         AS "paymentId", -- 付款单ID
+             T.APPLY_NO                          AS "sysNumber", --  付款编号
+             T.PROJECT_ID                        AS "projectId", --  项目id
+             (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectName", --  项目名称
+             (SELECT PROJECT_CODE FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)         AS "projectCode", --  项目编码
+             (SELECT AREA FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)                       AS "projectAddress", --   项目地址
+             T.PUR_CONTRACT_ID      AS "contractId", --   合同ID
+             ''      AS "contractName", --   合同名称
+             (SELECT T2.CONTRACT_NO FROM  AHZH_USER.PUR_CONTRACT_HEAD T2 WHERE T2.PUR_CONTRACT_HEAD_ID = T.PUR_CONTRACT_ID)      AS "contractNumber", --   合同编号
+             (SELECT T2.TOTAL_AMOUNT FROM  AHZH_USER.PUR_CONTRACT_HEAD T2 WHERE T2.PUR_CONTRACT_HEAD_ID = T.PUR_CONTRACT_ID)      AS "contractAmoun", -- t  合同金额
+             ''                             AS "payCompany", --   付款单位
+             ''                             AS "payAccount", --   付款账户
+             ''                             AS "payBank", --  付款银行
+             T.PAYEE_NAME                   AS "receivablesCompany", --   收款单位
+             T.PAYEE_ACCOUNT                AS "receivablesAccount", --   收款账户
+             T.PAYEE_BANK                   AS "receivablesBank", --  收款银行
+             TT.DATE_FUND                   AS "actualPaymentDate", --  实际付款日期
+             ''                             AS "accountSubject", --   账套主体
+             T.BASE_BALANCE_TYPE_ID         AS "settlementWayId", --  结算方式ID
+             (SELECT T2.BALANCE_TYPE_NAME FROM  AHZH_USER.BASE_BALANCE_TYPE T2 WHERE T2.BASE_BALANCE_TYPE_ID = T.BASE_BALANCE_TYPE_ID)             AS "settlementWayName", --  结算方式名称
+             ''                             AS "totalInvoiceAmount", --   累计收票金额
+             ''                             AS "totalPaymentAmount", --   累计付款金额
+             T.APPLY_AMOUNT                 AS "applyPaymentAmount", --   本次申请付款金额
+             TT.AMOUNT_CREDIT               AS "actualPaymentAmount", --  实际付款金额
+             ''                             AS "settlementAmount", --   本次结算金额
+             ''                             AS "invoiceTypeId", --  发票种类id
+             ''                             AS "invoiceTypeName", --  发票种类名称
+             ''                             AS "businessTypeId", --   发票业务类型id
+             ''                             AS "businessTypeName", --   发票业务类型名称
+             DECODE(T2.PAYMENT_TYPE_NAME,'付材料-工程款','支付其他经营活动款',
+                                  '付材料-投资款','支付其他经营活动款','')                            AS "moneyCategoryId", --  款项类别id
+             T2.PAYMENT_TYPE_NAME           AS "moneyCategoryName", --  款项类别名称
+             ''                             AS "moneyTypeId", --  款项类型id
+             ''                             AS "moneyTypeName", --  款项类型名称
+             ''                             AS "paymentBasisId", --   付款依据id
+             ''                             AS "paymentBasisName", --   付款依据名称
+             ''                             AS "budgetTypeId", --   预算类别id
+             ''                             AS "budgetTypeName", --   预算类别名称
+             ''                             AS "payWayId", --   支付方式id
+             ''                             AS "payWayName", --   支付方式名称
+             (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
+             (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
+             ''                             AS "isPurchase", --   是否实采
+             ''                             AS "isComplete", --   材料是否齐全
+             T.APPLY_PEOPLE    AS "applyUser", --  申请人
+             DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')    AS "status",-- 单据状态
+             ''                             AS "files", --  附件集合
+             T.REMARK                       AS "remarks", --  备注
+             '0'                            AS "delFlag", --  是否删除
+             T.CREATED_BY                   AS "createBy", --   创建人
+             T.LAST_UPDATED_BY              AS "updateBy", --   修改人
+             T.CREATION_DATE                AS "createTime", --   创建时间
+             T.LAST_UPDATE_DATE             AS "updateTime" --   修改时间
+        FROM  AHZH_USER.PUR_PAYMENT_APPLY_HEAD  T ,
+              AHZH_USER.FD_PAYMENT_TYPE T2,
+               (SELECT BILL_ID, --付款单ID
+                     BILL_NO, --付款编号
+                     DATE_FUND, --实际付款日期
+                     AMOUNT_CREDIT -- 实际付款金额
+                FROM  AHZH_USER.FIN_PAYING_VOUCHER HEAD
+               WHERE STAT = 5
+                 AND HEAD.SYSCREATE_TYPE = 3
+               )TT
+       WHERE  T2.FD_PAYMENT_TYPE_ID(+)  = T.PAYMENT_TYPE
+       AND TT.BILL_ID = T.PUR_PAYMENT_APPLY_HEAD_ID
+    </select>
+
+</mapper>

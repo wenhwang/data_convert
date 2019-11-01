@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.customer.CustomerMapper">
+    <resultMap id="resultMap" type="java.util.Map" autoMapping="true">
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <select id="selectCustomerInfoCobberList" resultMap="resultMap">
+
+        SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
+               T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
+               T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
+               T1.SHORT_NAME                                                                as "customerAbbreviation", --  客户简称
+               -- T1.HOLDER_TYPE            as "customerTypeId", --  客户类型ID
+               T1.CUSTOMER_KIND                                                             as "customerTypeId",       --  客户类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Holder_Type%' AND T1.HOLDER_TYPE = T2.DICTVALUE)   as "customerType",         --  客户类型
+               T1.COMPANY_TYPE                                                              as "industryId",           --  所属行业ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Company_Type%' AND T1.COMPANY_TYPE = T2.DICTVALUE) as "industry",             --  所属行业
+               ''                                                                           as "majorTypeId",          --  所属专业ID
+               ''                                                                           as "majorType",            --  所属专业
+               T1.CUSTOMER_TYPE                                                             as "featureId",            --  客户特征ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Customer_Type%'
+                  AND T1.CUSTOMER_TYPE = T2.DICTVALUE)                                      as "feature",              --  客户特征
+               ''                                                                           as "statusId",             --  客户状态ID
+               ''                                                                           as "status",               --  --  客户状态
+               ''                                                                           as "natureId",             --客户性质ID
+               ''                                                                           as "nature",               --  客户性质
+               T1.BUSINESSTYPE                                                              as "levelId",              --  客户等级ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%BusinessType%' AND T1.BUSINESSTYPE = T2.DICTVALUE) as "level",                --  客户等级
+               T1.COMPANYLEVEL                                                              as "sourceId",             --  客户来源ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Companylevel%' AND T1.COMPANYLEVEL = T2.DICTVALUE) as "source",               --  客户来源
+               T1.CONTACT_FN                                                                as "contacts",             --  主要联系人
+               T1.ACCOUNT_TELE                                                              as "phone",                --  联系电话
+               ''                                                                           as "province",             --  省份
+               ''                                                                           as "city",                 --  市
+               T1.AREANAME                                                                  as "county",               --  区县
+               T1.ADDRESS                                                                   as "address",              --  详细地址
+               ''                                                                           as "accountName",          --  账户名称
+               T1.BANK                                                                      AS "bankName",             --开户行
+               T1.BANK_ACCNO                                                                AS "bankAccount",          --银行账号
+               T1.WEBSITE                                                                   as "website",              --  客户官网
+               T1.COMPANY_NOTE                                                              as "introduce",            --  介绍
+               ''                                                                           as "remarks",              --  备注
+               ''                                                                           as "dutyUserId",           --  负责人ID
+               T1.EMPLOYEE_NAME                                                             as "dutyUserName",         --  负责人姓名
+               '0'                                                                          as "isSeas",               --  是否公海客户
+               T1.CREATED_BY                                                                as "createBy",             --创建人
+               T1.LAST_UPDATED_BY                                                           as "updateBy",             --修改人
+               T1.CREATION_DATE                                                             as "createTime",           --创建时间
+               T1.LAST_UPDATE_DATE                                                          as "updateTime"            --修改时间
+        FROM AHZH_USER.BASE_VIEW_CUSTOMER_ORG T1
+        WHERE T1.CUSTOMER_KIND = 3
+    </select>
+
+    <select id="selectCustomerInfoSubjectPersonList" resultMap="resultMap">
+        SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
+               T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
+               T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
+               T1.SHORT_NAME                                                                as "customerAbbreviation", --  客户简称
+               -- T1.HOLDER_TYPE            as "customerTypeId", --  客户类型ID
+               T1.CUSTOMER_KIND                                                             as "customerTypeId",       --  客户类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Holder_Type%' AND T1.HOLDER_TYPE = T2.DICTVALUE)   as "customerType",         --  客户类型
+               T1.COMPANY_TYPE                                                              as "industryId",           --  所属行业ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Company_Type%' AND T1.COMPANY_TYPE = T2.DICTVALUE) as "industry",             --  所属行业
+               ''                                                                           as "majorTypeId",          --  所属专业ID
+               ''                                                                           as "majorType",            --  所属专业
+               T1.CUSTOMER_TYPE                                                             as "featureId",            --  客户特征ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Customer_Type%'
+                  AND T1.CUSTOMER_TYPE = T2.DICTVALUE)                                      as "feature",              --  客户特征
+               ''                                                                           as "statusId",             --  客户状态ID
+               ''                                                                           as "status",               --  --  客户状态
+               ''                                                                           as "natureId",             --客户性质ID
+               ''                                                                           as "nature",               --  客户性质
+               T1.BUSINESSTYPE                                                              as "levelId",              --  客户等级ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%BusinessType%' AND T1.BUSINESSTYPE = T2.DICTVALUE) as "level",                --  客户等级
+               T1.COMPANYLEVEL                                                              as "sourceId",             --  客户来源ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Companylevel%' AND T1.COMPANYLEVEL = T2.DICTVALUE) as "source",               --  客户来源
+               T1.CONTACT                                                                   as "contacts",             --  主要联系人
+               T1.ACCOUNT_TELE                                                              as "phone",                --  联系电话
+               ''                                                                           as "province",             --  省份
+               ''                                                                           as "city",                 --  市
+               T1.AREANAME                                                                  as "county",               --  区县
+               T1.ADDRESS                                                                   as "address",              --  详细地址
+               ''                                                                           as "accountName",          --  账户名称
+               T1.BANK                                                                      AS "bankName",             --开户行
+               T1.BANK_ACCNO                                                                AS "bankAccount",          --银行账号
+               T1.WEBSITE                                                                   as "website",              --  客户官网
+               T1.COMPANY_NOTE                                                              as "introduce",            --  介绍
+               ''                                                                           as "remarks",              --  备注
+               ''                                                                           as "dutyUserId",           --  负责人ID
+               T1.EMPLOYEE_NAME                                                             as "dutyUserName",         --  负责人姓名
+               '0'                                                                          as "isSeas",               --  是否公海客户
+               T1.CREATED_BY                                                                as "createBy",             --创建人
+               T1.LAST_UPDATED_BY                                                           as "updateBy",             --修改人
+               T1.CREATION_DATE                                                             as "createTime",           --创建时间
+               T1.LAST_UPDATE_DATE                                                          as "updateTime"            --修改时间
+        FROM AHZH_USER.BASE_VIEW_CUSTOMER_ORG T1
+        WHERE T1.CUSTOMER_KIND = 2
+          AND NVL(T1.IS_BID, 0) != 2
+    </select>
+
+    <select id="selectCustomerInfoTenderCompanyList"  resultMap="resultMap">
+        SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
+               T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
+               T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
+               T1.SHORT_NAME                                                                as "customerAbbreviation", --  客户简称
+               -- T1.HOLDER_TYPE            as "customerTypeId", --  客户类型ID
+               T1.CUSTOMER_KIND                                                             as "customerTypeId",       --  客户类型ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Holder_Type%' AND T1.HOLDER_TYPE = T2.DICTVALUE)   as "customerType",         --  客户类型
+               T1.COMPANY_TYPE                                                              as "industryId",           --  所属行业ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Company_Type%' AND T1.COMPANY_TYPE = T2.DICTVALUE) as "industry",             --  所属行业
+               ''                                                                           as "majorTypeId",          --  所属专业ID
+               ''                                                                           as "majorType",            --  所属专业
+               T1.CUSTOMER_TYPE                                                             as "featureId",            --  客户特征ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Customer_Type%'
+                  AND T1.CUSTOMER_TYPE = T2.DICTVALUE)                                      as "feature",              --  客户特征
+               ''                                                                           as "statusId",             --  客户状态ID
+               ''                                                                           as "status",               --  --  客户状态
+               ''                                                                           as "natureId",             --客户性质ID
+               ''                                                                           as "nature",               --  客户性质
+               T1.BUSINESSTYPE                                                              as "levelId",              --  客户等级ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%BusinessType%' AND T1.BUSINESSTYPE = T2.DICTVALUE) as "level",                --  客户等级
+               T1.COMPANYLEVEL                                                              as "sourceId",             --  客户来源ID
+               (SELECT T2.DICTNAME
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE '%Companylevel%' AND T1.COMPANYLEVEL = T2.DICTVALUE) as "source",               --  客户来源
+               T1.CONTACT                                                                   as "contacts",             --  主要联系人
+               T1.ACCOUNT_TELE                                                              as "phone",                --  联系电话
+               ''                                                                           as "province",             --  省份
+               ''                                                                           as "city",                 --  市
+               T1.AREANAME                                                                  as "county",               --  区县
+               T1.ADDRESS                                                                   as "address",              --  详细地址
+               ''                                                                           as "accountName",          --  账户名称
+               T1.BANK                                                                      AS "bankName",             --开户行
+               T1.BANK_ACCNO                                                                AS "bankAccount",          --银行账号
+               T1.WEBSITE                                                                   as "website",              --  客户官网
+               T1.COMPANY_NOTE                                                              as "introduce",            --  介绍
+               ''                                                                           as "remarks",              --  备注
+               ''                                                                           as "dutyUserId",           --  负责人ID
+               T1.EMPLOYEE_NAME                                                             as "dutyUserName",         --  负责人姓名
+               '0'                                                                          as "isSeas",               --  是否公海客户
+               T1.CREATED_BY                                                                as "createBy",             --创建人
+               T1.LAST_UPDATED_BY                                                           as "updateBy",             --修改人
+               T1.CREATION_DATE                                                             as "createTime",           --创建时间
+               T1.LAST_UPDATE_DATE                                                          as "updateTime"            --修改时间
+        FROM AHZH_USER.BASE_VIEW_CUSTOMER_ORG T1
+        WHERE T1.CUSTOMER_KIND = 2
+          AND NVL(T1.IS_BID, 0) = 2
+    </select>
+
+    <select id="selectCustomerInfoLabourCompanyList" resultType="java.util.Map">
+        SELECT LOWER(sys_guid())     AS "customerId",           --    客户id
+               ''                    AS "customerCode",         --    客户编码
+               SECOND_PARTY_NAME     AS "customerName",         --    客户名称
+               ''                    AS "customerAbbreviation", --    客户简称
+               SECOND_PARTY_LINKMAN  AS "contacts",             --    主要联系人
+               ''                    AS "phone",                --   联系电话
+               ''                    AS "province",             --    省份
+               ''                    AS "city",                 --    市
+               ''                    AS "county",               --    区县
+               ''                    AS "address",              --   详细地址
+               SECOND_PARTY_USERNAME AS "accountName",          --   账户名称
+               SECOND_PARTY_BANK     AS "bankName",             --    开户行
+               SECOND_PARTY_ACCOUNT  AS "bankAccount",          --   银行账号
+               '0'                   as "isSeas",               --  是否公海客户
+               ''                    AS "createBy",             --    创建人
+               ''                    AS "updateBy",             --   修改人
+               ''                    AS "createTime",           --    创建时间
+               ''                    AS "updateTime"            --    修改时间
+        FROM AHZH_USER.EPM_PROJECT_CONTRACT
+        WHERE PROJECT_CONTRACT_CHARACTER = 2
+          AND PROJECT_CONTRACT_TYPE = 1
+
+    </select>
+
+    <select id="selectAnotherCustomerInfoLabourCompanyList"  resultMap="resultMap">
+        SELECT VENDOR_ID        AS "customerId",           --    客户id
+               VENDOR_CODE      AS "customerCode",         --    客户编码
+               VENDOR_NAME      AS "customerName",         --    客户名称
+               SHORT_NAME       AS "customerAbbreviation", --    客户简称
+               CONTACT          AS "contacts",             --    主要联系人
+               TELE             AS "phone",                --   联系电话
+               ''               AS "province",             --    省份
+               ''               AS "city",                 --    市
+               ''               AS "county",               --    区县
+               ADDRESS          AS "address",              --   详细地址
+               ''               AS "accountName",          --   账户名称
+               BANK             AS "bankName",             --    开户行
+               BANK             AS "bankAccount",          --   银行账号
+               '0'              as "isSeas",               --  是否公海客户
+               CREATED_BY       AS "createBy",             --    创建人
+               LAST_UPDATED_BY  AS "updateBy",             --   修改人
+               CREATION_DATE    AS "createTime",           --    创建时间
+               LAST_UPDATE_DATE AS "updateTime"            --    修改时间
+        FROM AHZH_USER.BASE_VIEW_VENDOR_ORG
+        WHERE VENDOR_ID IN (SELECT VENDOR_ID
+                            FROM AHZH_USER.FD_INPUT_INVOICE_HEAD HEAD
+                            WHERE INVOICE_CLASS = 2)
+    </select>
+</mapper>

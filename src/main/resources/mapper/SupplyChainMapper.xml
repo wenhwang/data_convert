@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.supply.SupplyChainMapper">
+    <resultMap id="SUPPLIER" type="com.example.module.supply.model.Supplier" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="PRODUCT" type="com.example.module.supply.model.Product" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="PRODUCT_CATEGORY" type="com.example.module.supply.model.ProductCategory" autoMapping="true" >
+        <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    </resultMap>
+
+    <select id="selectSuppliers" resultMap="SUPPLIER">
+        SELECT VENDOR_ID        AS "supplierId",      --  供应商id
+               VENDOR_CODE      AS "supplierCode",    --  供应商编码
+               VENDOR_NAME      AS "supplierName",    --  供应商名称
+               CONTACT          AS "contacts",        --  主要联系人
+               TELE             AS "phone",           -- 联系电话
+               ''               AS "province",        --  省份
+               ''               AS "city",            --  市
+               ''               AS "county",          --  区县
+               ADDRESS          AS "address",         -- 详细地址
+               WEBSITE          AS "website",         -- 网址
+               ACCOUNT_DAYS     AS "accountPeriod",   -- 账期
+               ''               AS "outputValue",     -- 年产值
+               ''               AS "accountName",     -- 账户名称
+               BANK             AS "bankName",        --  开户行
+               BANK_ACCNO       AS "bankAccount",     -- 银行账号
+               ''               AS "deliveryScore",   -- 交货能力打分
+               ''               AS "serviceScore",    --  服务能力打分
+               ''               AS "creditScore",     -- 信用等级打分
+               ''               AS "supplyCostScore", -- 供货成本打分
+               CREATED_BY       AS "createBy",        --  创建人
+               LAST_UPDATED_BY  AS "updateBy",        --  修改人
+               CREATION_DATE    AS "createTime",      --  创建时间
+               LAST_UPDATE_DATE AS "updateTime"       --  修改时间
+        FROM AHZH_USER.BASE_VIEW_VENDOR_ORG
+    </select>
+
+    <select id="selectProducts" resultMap="PRODUCT">
+        SELECT ITEM_ID          AS "commodityId",   --   商品id
+               ITEM_NAME        AS "commodityName", --   商品名称
+               ITEM_CODE        AS "commodityCode", --   商品编码
+               ''               AS "image",         --   商品图片地址
+               ''               AS "categoryId",    --    商品分类id
+               ITEM_CLASS2      AS "categoryOne",   --   商品一级分类
+               ITEM_CLASS4      AS "categoryTwo",   --   商品二级分类
+               ITEM_CLASS1      AS "categoryThree", --   商品三级分类
+               SPECS            AS "model",         --   规格型号
+               UOM_NAME         AS "unit",          --    单位
+               ''               AS "brand",         --   品牌
+               ''               AS "supplierId",    --    供应商id
+               ''               AS "supplier",      --    供应商名称
+               ''               AS "produceDate",   --   生产日期
+               ''               AS "overdueDate",   --   过期日期
+               ITEM_USABLE      AS "isValid",       --   是否有效
+               ''               AS "purchasePrice", --   采购价
+               ''               AS "salesPrice",    --    销售价
+               ''               AS "activityPrice", --   活动价
+               ''               AS "synopsis",      --    简介
+               CREATED_BY       AS "createBy",      --    创建人
+               LAST_UPDATED_BY  AS "updateBy",      --    修改人
+               CREATION_DATE    AS "createTime",    --    创建时间
+               LAST_UPDATE_DATE AS "updateTime"     --    修改时间
+        FROM AHZH_USER.BASE_VIEW_ITEM_ORG
+    </select>
+
+    <select id="selectProductCategorys" resultMap="PRODUCT_CATEGORY">
+
+        SELECT ITEM_CLASS_ID    AS "categoryId",   --分类ID
+               ITEM_CLASS_NAME  AS "categoryName", --分类名称
+               ITEM_CLASS_PID   AS "parentId",     --上级分类ID
+               CREATED_BY       AS "createBy",     --创建人
+               LAST_UPDATED_BY  AS "updateBy",     --修改人
+               CREATION_DATE    AS "createTime",   --创建时间
+               LAST_UPDATE_DATE AS "updateTime"    --修改时间
+        FROM AHZH_USER.ITEM_CLASS
+    </select>
+</mapper>

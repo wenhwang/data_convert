@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.module.resource.ResourceMapper">
+
+    <resultMap id="ARCHIVE_APPLY" type="com.example.module.resource.model.ArchiveApply" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="ARCHIVE_MANAGE" type="com.example.module.resource.model.ArchiveManage" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
+    </resultMap>
+
+    <resultMap id="ARCHIVE_LEND_LOG" type="com.example.module.resource.model.ArchiveLendLog" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
+    </resultMap>
+
+    <select id="selectResourceCategoryParent" resultType="java.util.Map">
+        SELECT TO_CHAR(T.RESOUCE_CATEGORY_ID) AS "resouceCategoryId",
+               T.RESOUCE_CATEGORY_NAME        AS "resouceCategoryName"
+        FROM AHZH_USER.EPM_RESOUCE_CATEGORY T
+        WHERE T.RESOUCE_TYPE != 6
+          AND T.RESOUCE_CATEGORY_PID = 0
+    </select>
+
+    <select id="selectResourceCategoryChild" resultType="java.lang.String">
+        SELECT T.RESOUCE_CATEGORY_NAME AS "resouceCategoryName"
+        FROM AHZH_USER.EPM_RESOUCE_CATEGORY T
+        WHERE T.RESOUCE_TYPE != 6
+          AND T.RESOUCE_CATEGORY_PID = TO_NUMBER(#{resouceCategoryId})
+    </select>
+
+    <!--
+    0/1.制单、3.启动、5.已审核、99.驳回
+    #####0 待审核 1 审核中 2 审核通过 3 审核不通过
+    0 待审核 2 审核不通过 3 撤销 4 待归还 5 已归还 (审核通过为待归还)
+    0/1     99          99
+    -->
+    <select id="selectApplyReceipts" resultMap="ARCHIVE_APPLY">
+        SELECT T.APPLY_BILL_NO                                           AS "sysNumber",        --申请单号
+               LOAN_PROJECT_ID                                           AS "projectId",        -- 关联项目id
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.LOAN_PROJECT_ID)                 AS "projectName",      --  关联项目
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.LOAN_PROJECT_ID)                 AS "partnerName",      --  使用合伙人
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.LOAN_PROJECT_ID)                 AS "partnerId",        --  使用合伙人Id
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.LOAN_PROJECT_ID)                 AS "ownerId",          --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.LOAN_PROJECT_ID)                 AS "ownerName",        --  业主名称
+               (SELECT SUBSTR(T2.ORGNAME, INSTR(T2.ORGNAME, '-', 1, 1) + 1)
+                FROM AHZH_USER.CPCORG T2
+                WHERE T2.ORGID = T.APPLY_DEPT_ID)                        AS "orgName",          --  申请部门
+               ESTIMATED_LOAN_DATE                                       AS "expectLendTime",   --   预计借出时间
+               ESTIMATED_RETURN_DATE                                     AS "expectReturnTime", --   预计归还时间
+               ''                                                        AS "actualReturnTime", --   实际归还时间
+               LOAN_DESCRIPTION                                          AS "use",              --  用途
+               (SELECT T2.USERID
+                FROM AHZH_USER.CPCUSER T2
+                WHERE T2.SYSUSERID = T.LOAN_PERSON_ID)                   AS "userBy",           --   使用人
+               CREATE_BY                                                 AS "createBy",         --   创建人
+               CREATE_DATE                                               AS "createTime",       --   创建时间
+               LAST_UPDATED_BY                                           AS "updateBy",         --   修改人
+               LAST_UPDATED_DATE                                         AS "updateTime",       --   修改时间
+               RESOUCE_LOAN_RETURN_HEAD_ID                               AS "applyId",          --  申请Id
+               DECODE(STAT, 0, '0', 1, '0', 3, '0', 5, '4', 99, '2', '') AS "status",           --   状态
+               APPLY_PERSON_ID                                           AS "applyBy",          --  申请人
+               (SELECT T2.USERID
+                FROM AHZH_USER.CPCUSER T2
+                WHERE T2.SYSUSERID = T.APPLY_PERSON_ID)                  AS "applyByRealName",  --申请人真实姓名
+               TO_DATE(APPLY_BILL_DATE, 'yyyy-mm-dd HH24:MI:SS')         AS "applyDate"         --申请时间
+        FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_HEAD T
+    </select>
+
+    <select id="selectAttachements" resultType="com.example.module.resource.model.ArchiveFile">
+        SELECT DOCID   AS "fileId",   --附件ID
+               DOCNAME AS "fileName", --附件名称
+               URL     AS "fileUrl"   --附件地址
+        FROM AHZH_USER.VIEW_SYS_ATTACH
+    </select>
+
+    <!--公司证照-->
+    <select id="selectCompanyCerts" resultMap="ARCHIVE_MANAGE">
+        SELECT T.RESOURCE_IDENTIFIER                                                        AS "number",         --   证件编号
+               RESOUCE_ARCHIVES_ID                                                          AS "archiveId",      --  档案id
+               DECODE(STAT, '在库', '0', '锁定', '1', '已借出', '1')                               AS "useStatus",      --  使用状态
+               '0'                                                                          AS "delFlag",        --  删除标识
+               EFFECTIVE_DATE                                                               AS "startDate",      --  生效时间
+               EXP_DATE                                                                     AS "endDate",        --  失效时间
+               REMARK                                                                       AS "remarks",        --  备注
+               CREATE_BY                                                                    AS "createBy",       --   创建人
+               CREATE_DATE                                                                  AS "createTime",     --   创建时间
+               LAST_UPDATE_BY                                                               AS "updateBy",       --  修改人
+               LAST_UPDATE_DATE                                                             AS "updateTime",     --   修改时间
+               RESOURCE_NAME                                                                AS "name",           --   档案名称
+               (SELECT T2.USERNAME FROM AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.KEEPER) AS "safekeepUser",   --   保管人
+               T.KEEPER                                                                     AS "safekeepUserId", --   保管人Id
+               IS_USABLE                                                                    AS "isEnabled",      --  是否可用
+               '公司证照'                                                                       AS "parentType",     --   证件类型父类
+               (SELECT RESOUCE_CATEGORY_ID
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_NAME = '公司证照')                                    AS "parentTypeId",   --   证件类型父类Id
+               T.RESOUCE_CATEGORY_ID                                                        AS "typeId",         --   证件类型子类Id
+               (SELECT RESOUCE_CATEGORY_NAME
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_ID = T.RESOUCE_CATEGORY_ID)                       AS "type",           --   证件类型子类
+               '0'                                                                          AS "archiveType",    --  档案类型
+               ''                                                                           AS "validityStatus", --   有效期状态
+               RESOURCE_ARCHIVES_CODE                                                       AS "sysNumber"       --  档案编号
+        FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T
+        WHERE RESOUCE_TYPE = 1
+    </select>
+
+    <!-- 人员证照 -->
+    <select id="selectEmplyeeCerts" resultMap="ARCHIVE_MANAGE">
+        SELECT T.RESOURCE_IDENTIFIER                                                        AS "number",         --   证件编号
+               RESOUCE_ARCHIVES_ID                                                          AS "archiveId",      --  档案id
+               DECODE(STAT, '在库', '0', '锁定', '1', '已借出', '1')                               AS "useStatus",      --  使用状态
+               '0'                                                                          AS "delFlag",        --  删除标识
+               EFFECTIVE_DATE                                                               AS "startDate",      --  生效时间
+               EXP_DATE                                                                     AS "endDate",        --  失效时间
+               REMARK                                                                       AS "remarks",        --  备注
+               CREATE_BY                                                                    AS "createBy",       --   创建人
+               CREATE_DATE                                                                  AS "createTime",     --   创建时间
+               LAST_UPDATE_BY                                                               AS "updateBy",       --  修改人
+               LAST_UPDATE_DATE                                                             AS "updateTime",     --   修改时间
+               RESOURCE_NAME                                                                AS "name",           --   档案名称
+               (SELECT T2.USERNAME FROM AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.KEEPER) AS "safekeepUser",   --   保管人
+               T.KEEPER                                                                     AS "safekeepUserId", --   保管人Id
+               IS_USABLE                                                                    AS "isEnabled",      --  是否可用
+               '人员证照'                                                                       AS "parentType",     --   证件类型父类
+               (SELECT RESOUCE_CATEGORY_ID
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_NAME = '人员证照')                                    AS "parentTypeId",   --   证件类型父类Id
+               T.RESOUCE_CATEGORY_ID                                                        AS "typeId",         --   证件类型子类Id
+               (SELECT RESOUCE_CATEGORY_NAME
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_ID = T.RESOUCE_CATEGORY_ID)                       AS "type",           --   证件类型子类
+               '0'                                                                          AS "archiveType",    --  档案类型
+               ''                                                                           AS "validityStatus", --   有效期状态
+               RESOURCE_ARCHIVES_CODE                                                       AS "sysNumber"       --  档案编号
+        FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T
+        WHERE RESOUCE_TYPE = 2
+    </select>
+
+    <!--印章证照-->
+    <select id="selectStampCerts" resultMap="ARCHIVE_MANAGE">
+        SELECT T.RESOURCE_IDENTIFIER                                                        AS "number",         --   证件编号
+               RESOUCE_ARCHIVES_ID                                                          AS "archiveId",      --  档案id
+               DECODE(STAT, '在库', '0', '锁定', '1', '已借出', '1')                               AS "useStatus",      --  使用状态
+               '0'                                                                          AS "delFlag",        --  删除标识
+               EFFECTIVE_DATE                                                               AS "startDate",      --  生效时间
+               EXP_DATE                                                                     AS "endDate",        --  失效时间
+               REMARK                                                                       AS "remarks",        --  备注
+               CREATE_BY                                                                    AS "createBy",       --   创建人
+               CREATE_DATE                                                                  AS "createTime",     --   创建时间
+               LAST_UPDATE_BY                                                               AS "updateBy",       --  修改人
+               LAST_UPDATE_DATE                                                             AS "updateTime",     --   修改时间
+               RESOURCE_NAME                                                                AS "name",           --   档案名称
+               (SELECT T2.USERNAME FROM AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.KEEPER) AS "safekeepUser",   --   保管人
+               KEEPER                                                                       AS "safekeepUserId", --   保管人Id
+               IS_USABLE                                                                    AS "isEnabled",      --  是否可用
+               '印章证照'                                                                       AS "parentType",     --   证件类型父类
+               (SELECT RESOUCE_CATEGORY_ID
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_NAME = '印章证照')                                    AS "parentTypeId",   --   证件类型父类Id
+               T.RESOUCE_CATEGORY_ID                                                        AS "typeId",         --   证件类型子类Id
+               (SELECT RESOUCE_CATEGORY_NAME
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_ID = T.RESOUCE_CATEGORY_ID)                       AS "type",           --   证件类型子类
+               '0'                                                                          AS "archiveType",    --  档案类型
+               ''                                                                           AS "validityStatus", --   有效期状态
+               RESOURCE_ARCHIVES_CODE                                                       AS "sysNumber"       --  档案编号
+        FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T
+        WHERE RESOUCE_TYPE = 3
+    </select>
+
+    <!-- 招投标账户 -->
+    <select id="selectBidAccounts" resultMap="ARCHIVE_MANAGE">
+        SELECT RESOUCE_ARCHIVES_ID                                                          AS "archiveId",      -- 账户id
+               T.RESOURCE_IDENTIFIER                                                        AS "number",         --   账户编码
+               RESOURCE_NAME                                                                AS "name",           --   账号名称
+               ''                                                                           AS "area",           --   所属地区
+               DECODE(IS_CA_LOCK, '是', '0', '否', '1', '')                                   AS "isCA",           --   是否AC锁
+               (SELECT T2.USERNAME FROM AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.KEEPER) AS "safekeepUser",   --   保管人
+               KEEPER                                                                       AS "safekeepUserId", --   保管人Id
+               URL                                                                          AS "biddingWebSite", --   招标网址
+               RESOURCE_IDENTIFIER                                                          AS "account",        --  账号
+               '0'                                                                          AS "delFlag",        --  删除标识
+               CREATE_BY                                                                    AS "createBy",       --   创建人
+               CREATE_DATE                                                                  AS "createTime",     --   创建时间
+               LAST_UPDATE_DATE                                                             AS "updateTime",     --   修改时间
+               LAST_UPDATE_BY                                                               AS "updateBy",       --   修改人
+               ''                                                                           AS "validityStatus", --   有效期状态
+               ''                                                                           AS "isEnabled",      --  是否可用
+               STAT                                                                         AS "useStatus",      --  使用状态
+               EFFECTIVE_DATE                                                               AS "startDate",      --  生效时间
+               EXP_DATE                                                                     AS "endDate",        --  失效时间
+               REMARK                                                                       AS "remarks",        --  备注
+               RESOURCE_ARCHIVES_CODE                                                       AS "sysNumber",      --  账户编号
+               RESOURCE_NAME                                                                AS "platformName",   --   账号所属平台名称
+               '2'                                                                          AS "archiveType"     --  档案类型
+        FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T
+        WHERE RESOUCE_TYPE = 5
+
+    </select>
+
+    <!--项目业绩-->
+    <select id="selectProjectPerformances" resultMap="ARCHIVE_MANAGE">
+        SELECT T.RESOURCE_IDENTIFIER                                                        AS "number",               ---    业绩编码
+               T.RESOURCE_ARCHIVES_CODE                                                     AS "sysNumber",            ---    业绩编号
+               T.RESOUCE_ARCHIVES_ID                                                        AS "archiveId",            ---    业绩id
+               '1'                                                                          AS "archiveType",          ---    档案类型
+               T.RESOURCE_NAME                                                              AS "name",                 ---     业绩名称
+               (SELECT PROJECT_ID
+                FROM AHZH_USER.EPM_PROJECT T3
+                WHERE T3.PROJECT_CODE = T.RESOURCE_IDENTIFIER)                              AS "originalProjectId",    ---    原项目Id
+               (SELECT PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T3
+                WHERE T3.PROJECT_CODE = T.RESOURCE_IDENTIFIER)                              AS "originalProjectName",  ---    原项目名
+               (SELECT T4.PROJECT_CONTRACT_NAME
+                FROM AHZH_USER.EPM_PROJECT_CONTRACT T4
+                WHERE T4.PROJECT_CONTRACT_ID = T.CONTACT_ID)                                AS "originalContractName", ---     原合同名
+               T.CONTACT_ID                                                                 AS "originalContractId",   ---     原合同Id
+               T.CREATE_BY                                                                  AS "createBy",             ---     创建人
+               T.CREATE_DATE                                                                AS "createTime",           ---     创建时间
+               T.LAST_UPDATE_BY                                                             AS "updateBy",             ---     修改人
+               T.LAST_UPDATE_DATE                                                           AS "updateTime",           ---     修改时间
+               '0'                                                                          AS "delFlag",              ---    删除标识
+               (SELECT DECODE(RESOUCE_CATEGORY_NAME, '暖通-多联机', '暖通', '暖通-风冷螺杆',
+                              '暖通', '暖通-水机', '暖通', '暖通-风冷模块', '暖通',
+                              '暖通-地源热泵', '暖通', '暖通-离心机', '暖通',
+                              '暖通-水冷螺杆', '暖通',
+                              '暖通-水源热泵', '暖通',
+                              RESOUCE_CATEGORY_NAME)
+                FROM AHZH_USER.EPM_RESOUCE_CATEGORY T2
+                WHERE T2.RESOUCE_CATEGORY_ID = T.RESOUCE_CATEGORY_ID)                       AS "type",                 ---     业绩类别
+               T.RESOUCE_CATEGORY_ID                                                        AS "typeId",               ---     业绩类别Id
+               T.CONTRACT_AMOUNT                                                            AS "performance",          ---    业绩
+               T.COMMENCEMENT_DATE                                                          AS "startWorkDate",        ---    开工日期
+               T.COMPLETION_DATE                                                            AS "checkWorkDate",        ---    验收日期
+               ''                                                                           AS "useStatus",            ---    使用状态
+               ''                                                                           AS "validityStatus",       ---     有效期状态
+               (SELECT T2.USERNAME FROM AHZH_USER.CPCUSER T2 WHERE T2.SYSUSERID = T.KEEPER) AS "safekeepUser",         --   保管人
+               T.KEEPER                                                                     AS "safekeepUserId",       --   保管人Id
+               (SELECT T2.CUSTOMER_NAME
+                FROM AHZH_USER.CUSTOMER T2
+                WHERE T2.CUSTOMER_ID = T.LOAN_PARTNER_ID)                                   AS "partnerName",          --  合伙人
+               T.LOAN_PARTNER_ID                                                            AS "partnerId"             --  合伙人Id
+        FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T,
+             AHZH_USER.EPM_PROJECT TT
+        WHERE RESOUCE_TYPE = 4
+          AND TT.PROJECT_ID(+) = T.LOAN_PROJECT_ID
+    </select>
+
+    <!--档案使用记录-->
+    <select id="selectCmpEmyStampRecords" resultMap="ARCHIVE_LEND_LOG">
+        SELECT LOWER(sys_guid())                                         AS "lendId",           --    记录id
+               HEAD.RESOUCE_LOAN_RETURN_HEAD_ID                          AS "applyId",          --  申请ID
+               (SELECT T2.RESOURCE_IDENTIFIER
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID) AS "sysNumber",        --  档案编号
+               RESOUCE_ARCHIVES_ID                                       AS "archiveId",        --  档案ID
+               (SELECT T2.RESOURCE_NAME
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID) AS "name",             --  档案名称
+               DECODE(LOAN_RETURN_STAT, 0, '1', 1, '1', 2, '0')          AS "useStatus",        --  使用状态
+               LOAN_PROJECT_ID                                           AS "projectId",        --  关联项目ID
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              AS "projectName",      --  关联项目
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "partnerId",        --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "partnerName",      --  合伙人名称
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "ownerId",          --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "ownerName",        --  业主名称
+               (SELECT SUBSTR(T2.ORGNAME, INSTR(T2.ORGNAME, '-', 1, 1) + 1)
+                FROM AHZH_USER.CPCORG T2
+                WHERE T2.ORGID = HEAD.APPLY_DEPT_ID)                     AS "orgName",          --  申请部门
+               ESTIMATED_LOAN_DATE                                       AS "expectLendTime",   --  预计借出时间
+               ESTIMATED_RETURN_DATE                                     AS "expectReturnTime", --  预计归还时间
+               RETURN_DATE                                               AS "actualReturnTime", --  实际归还时间
+               LOAN_DESCRIPTION                                          AS "use",              --  用途
+               (SELECT T2.USERID
+                FROM AHZH_USER.CPCUSER T2
+                WHERE T2.SYSUSERID = HEAD.LOAN_PERSON_ID)                AS "userBy",           --  使用人
+               CREATE_BY                                                 AS "createBy",         --  创建人
+               CREATE_DATE                                               AS "createTime",       --  创建时间
+               LAST_UPDATED_BY                                           AS "updateBy",         --  修改人
+               LAST_UPDATED_DATE                                         AS "updateTime",       --  修改时间
+               DECODE(STAT, 1, '0', 3, '1', '5', '2', '99', '2', '')     AS "applyStatus",      --  审核状态
+               (CASE
+                    WHEN HEAD.STAT = 1 THEN '0'
+                    WHEN HEAD.STAT = 3 THEN '1'
+                    WHEN HEAD.STAT = 99 THEN '3'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 0 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 1 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 2 THEN '5'
+                    ELSE ''
+                   END)                                                  AS "status"            --  状态
+        FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_HEAD HEAD,
+             AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE LINE
+        WHERE HEAD.RESOUCE_LOAN_RETURN_HEAD_ID = LINE.RESOUCE_LOAN_RETURN_HEAD_ID
+          AND RESOUCE_TYPE IN (1, 2, 3)
+
+    </select>
+
+    <!--招投标账户使用记录-->
+    <select id="selectBidAccountRecords" resultMap="ARCHIVE_LEND_LOG">
+        SELECT LOWER(sys_guid())                                         AS "lendId",           --    记录id
+               HEAD.RESOUCE_LOAN_RETURN_HEAD_ID                          AS "applyId",          --  申请ID
+               (SELECT T2.RESOURCE_IDENTIFIER
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID) AS "sysNumber",        --  档案编号
+               RESOUCE_ARCHIVES_ID                                       AS "archiveId",        --  档案ID
+               (SELECT T2.RESOURCE_NAME
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID) AS "name",             --  档案名称
+               DECODE(LOAN_RETURN_STAT, 0, '1', 1, '1', 2, '0')          AS "useStatus",        --  使用状态
+               LOAN_PROJECT_ID                                           AS "projectId",        --  关联项目ID
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              AS "projectName",      --  关联项目
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "partnerId",        --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "partnerName",      --  合伙人名称
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "ownerId",          --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)              as "ownerName",        --  业主名称
+               (SELECT SUBSTR(T2.ORGNAME, INSTR(T2.ORGNAME, '-', 1, 1) + 1)
+                FROM AHZH_USER.CPCORG T2
+                WHERE T2.ORGID = HEAD.APPLY_DEPT_ID)                     AS "orgName",          --  申请部门
+               ESTIMATED_LOAN_DATE                                       AS "expectLendTime",   --  预计借出时间
+               ESTIMATED_RETURN_DATE                                     AS "expectReturnTime", --  预计归还时间
+               RETURN_DATE                                               AS "actualReturnTime", --  实际归还时间
+               LOAN_DESCRIPTION                                          AS "use",              --  用途
+               (SELECT T2.USERID
+                FROM AHZH_USER.CPCUSER T2
+                WHERE T2.SYSUSERID = HEAD.LOAN_PERSON_ID)                AS "userBy",           --  使用人
+               CREATE_BY                                                 AS "createBy",         --  创建人
+               CREATE_DATE                                               AS "createTime",       --  创建时间
+               LAST_UPDATED_BY                                           AS "updateBy",         --  修改人
+               LAST_UPDATED_DATE                                         AS "updateTime",       --  修改时间
+               DECODE(STAT, 1, '0', 3, '1', '5', '2', '99', '2', '')     AS "applyStatus",      --  审核状态
+               (CASE
+                    WHEN HEAD.STAT = 1 THEN '0'
+                    WHEN HEAD.STAT = 3 THEN '1'
+                    WHEN HEAD.STAT = 99 THEN '3'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 0 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 1 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 2 THEN '5'
+                    ELSE ''
+                   END)                                                  AS "status"            --  状态
+        FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_HEAD HEAD,
+             AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE LINE
+        WHERE HEAD.RESOUCE_LOAN_RETURN_HEAD_ID = LINE.RESOUCE_LOAN_RETURN_HEAD_ID
+          AND RESOUCE_TYPE IN (5)
+    </select>
+
+    <select id="selectProjectPerformanceRecors" resultMap="ARCHIVE_LEND_LOG">
+        SELECT LOWER(sys_guid())                                          AS "lendId",           --    记录id
+               HEAD.RESOUCE_LOAN_RETURN_HEAD_ID                           AS "applyId",          --  申请ID
+               (SELECT T2.RESOURCE_IDENTIFIER
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID)  AS "sysNumber",        --  档案编号
+               LINE.RESOUCE_ARCHIVES_ID                                   AS "archiveId",        --  档案ID
+               (SELECT T2.RESOURCE_NAME
+                FROM AHZH_USER.EPM_RESOUCE_ARCHIVES T2
+                WHERE T2.RESOUCE_ARCHIVES_ID = LINE.RESOUCE_ARCHIVES_ID)  AS "name",             --  档案名称
+               HEAD.LOAN_PROJECT_ID                                       AS "projectId",        --  关联项目ID
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)               AS "projectName",      --  关联项目
+               (SELECT T2.PARTNER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)               as "partnerId",        --  合伙人ID
+               (SELECT DISTINCT T2.PARTNER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)               as "partnerName",      --  合伙人名称
+               (SELECT T2.HOLDER_ID
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)               as "ownerId",          --  业主ID
+               (SELECT T2.HOLDER
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = HEAD.LOAN_PROJECT_ID)               as "ownerName",        --  业主名称
+               (SELECT SUBSTR(T2.ORGNAME, INSTR(T2.ORGNAME, '-', 1, 1) + 1)
+                FROM AHZH_USER.CPCORG T2
+                WHERE T2.ORGID = HEAD.APPLY_DEPT_ID)                      AS "orgName",          --  申请部门
+               HEAD.ESTIMATED_LOAN_DATE                                   AS "expectLendTime",   --  预计借出时间
+               HEAD.ESTIMATED_RETURN_DATE                                 AS "expectReturnTime", --  预计归还时间
+               LINE.RETURN_DATE                                           AS "actualReturnTime", --  实际归还时间
+               HEAD.LOAN_DESCRIPTION                                      AS "use",              --  用途
+               (SELECT T2.USERID
+                FROM AHZH_USER.CPCUSER T2
+                WHERE T2.SYSUSERID = HEAD.LOAN_PERSON_ID)                 AS "userBy",           --  使用人
+               HEAD.CREATE_BY                                             AS "createBy",         --  创建人
+               HEAD.CREATE_DATE                                           AS "createTime",       --  创建时间
+               HEAD.LAST_UPDATED_BY                                       AS "updateBy",         --  修改人
+               HEAD.LAST_UPDATED_DATE                                     AS "updateTime",       --  修改时间
+               DECODE(LINE.LOAN_RETURN_STAT, 0, '1', 1, '1', 2, '0')      AS "useStatus",        --  使用状态
+               DECODE(HEAD.STAT, 1, '0', 3, '1', '5', '2', '99', '2', '') AS "applyStatus",      --  审核状态
+               (CASE
+                    WHEN HEAD.STAT = 1 THEN '0'
+                    WHEN HEAD.STAT = 3 THEN '1'
+                    WHEN HEAD.STAT = 99 THEN '3'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 0 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 1 THEN '4'
+                    WHEN HEAD.STAT = 5 AND LINE.LOAN_RETURN_STAT = 2 THEN '5'
+                    ELSE ''
+                   END)                                                   AS "status"
+        FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_HEAD HEAD,
+             AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE LINE
+        WHERE HEAD.RESOUCE_LOAN_RETURN_HEAD_ID = LINE.RESOUCE_LOAN_RETURN_HEAD_ID
+          AND RESOUCE_TYPE IN (4)
+
+    </select>
+
+    <!--
+        借还状态(0|待借出、1|已借出、2|已归还)
+        0 空闲 1 使用中 2 已过期    状态为待归还 对应 使用中
+        已归还  对应  空闲
+        未归还 超过归还时间 为已过期
+    -->
+    <select id="selectApplyReceiptDetail" resultType="java.util.Map">
+        SELECT WM_CONCAT(LOAN_RETURN_STAT) AS "STAT"
+        FROM (SELECT DISTINCT T.LOAN_RETURN_STAT
+              FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE T
+              WHERE T.RESOUCE_LOAN_RETURN_HEAD_ID = #{applyId})
+    </select>
+
+    <select id="selectApplyReceiptReturnTime" resultType="java.util.Map">
+        SELECT MAX(T.RETURN_DATE) AS "RETURN_DATE"
+        FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE T
+        WHERE T.RESOUCE_LOAN_RETURN_HEAD_ID = #{applyId}
+          AND T.LOAN_RETURN_STAT = 2
+    </select>
+
+
+</mapper>
