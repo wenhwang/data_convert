@@ -2,8 +2,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.example.module.financial.FinancialMapper">
 
-    <resultMap id="FinanceReimbursement" type="com.example.module.financial.model.FinanceReimbursement" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    <resultMap id="FinanceReimbursement" type="com.example.module.financial.model.FinanceReimbursement"
+               autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <!--报销单-->
     <select id="selectExpenseSheet" resultMap="FinanceReimbursement">
@@ -62,7 +64,8 @@
 
     <!--   TODO:需确认  -->
     <resultMap id="FinanceRepayment" type="com.example.module.financial.model.FinanceRepayment" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectRepayment" resultMap="FinanceRepayment">
        SELECT T.PAYMENT_TYPE,
@@ -76,10 +79,10 @@
                    5, ( SELECT T2.ORG_ID FROM  AHZH_USER.EMPLOYEE_HEADER T2 WHERE T.REPAYMENT_ID = T2.EMPLOYEE_ID),
                    '')                 AS "departmentId", --   申请部门ID
               DECODE(T.PAYMENT_TYPE ,
-                   2, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
-                   3, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
-                   4, (SELECT T2.DEPT_NAME FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
-                   5, (SELECT T2.ORG_NAME  FROM  AHZH_USER.EMPLOYEE_HEADER T2 WHERE T.REPAYMENT_ID = T2.EMPLOYEE_ID),
+                   2, (SELECT NVL(SUBSTR(T2.DEPT_NAME, INSTR(T2.DEPT_NAME, '-', 1, 1) + 1), '') FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   3, (SELECT NVL(SUBSTR(T2.DEPT_NAME, INSTR(T2.DEPT_NAME, '-', 1, 1) + 1), '') FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   4, (SELECT NVL(SUBSTR(T2.DEPT_NAME, INSTR(T2.DEPT_NAME, '-', 1, 1) + 1), '') FROM  AHZH_USER.BASE_VIEW_CUSTOMER_ORG T2 WHERE T.REPAYMENT_ID = T2.CUSTOMER_ID),
+                   5, (SELECT NVL(SUBSTR(T2.ORG_NAME, INSTR(T2.ORG_NAME, '-', 1, 1) + 1), '')  FROM  AHZH_USER.EMPLOYEE_HEADER T2 WHERE T.REPAYMENT_ID = T2.EMPLOYEE_ID),
                    '')                 AS "departmentName", --   申请部门名称
               ''                 AS "repaymentWayId", --   还款方式id
               ''                 AS "repaymentWay", --   还款方式
@@ -102,7 +105,8 @@
 
     <!--备用金-->
     <resultMap id="FinanceReserveFund" type="com.example.module.financial.model.FinanceReserveFund" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectReserveFund" resultMap="FinanceReserveFund">
         SELECT LOAN_ID            AS "reimbursementId",             --  报销ID
@@ -122,7 +126,7 @@
                BANK_NAME                                    AS "repaymentBank",              --  收款银行
                BANK_ACCNO                                   AS "repaymentAccount",           --  收款账号
                FEE_ORG_ID                                   AS "companyId",                  --  费用承担单位ID
-               (SELECT ORGNAME FROM  AHZH_USER.CPCORG T2 WHERE T2.ORGID = T.FEE_ORG_ID )     AS "companyName",  --  费用承担单位名称
+               (SELECT  NVL(SUBSTR(ORGNAME, INSTR(ORGNAME, '-', 1, 1) + 1), '') FROM  AHZH_USER.CPCORG T2 WHERE T2.ORGID = T.FEE_ORG_ID )     AS "companyName",  --  费用承担单位名称
                '中徽机电科技股份有限公司'                   AS "accountSubject",             --  帐套主体
                LOAN_PURPOSE                                 AS "remarks",                    --  用途
                ''                                           AS "files",                      --  附件集合
@@ -140,8 +144,10 @@
 
     </select>
 
-    <resultMap id="FinanceCapitalAccount" type="com.example.module.financial.model.FinanceCapitalAccount" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    <resultMap id="FinanceCapitalAccount" type="com.example.module.financial.model.FinanceCapitalAccount"
+               autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectCapitalAccount" resultMap="FinanceCapitalAccount">
             SELECT
@@ -185,8 +191,10 @@
     </select>
 
     <!-- 外经证-->
-    <resultMap id="FinanceBusinessLicense" type="com.example.module.financial.model.FinanceBusinessLicense" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    <resultMap id="FinanceBusinessLicense" type="com.example.module.financial.model.FinanceBusinessLicense"
+               autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectBusinessLicense" resultMap="FinanceBusinessLicense">
          SELECT DIFF_AREA_VAT_APPLY_ID       AS "businessLicenseId", --   外经证ID
@@ -249,8 +257,10 @@
     </select>
 
     <!-- 收票-->
-    <resultMap id="FinanceReceiveInvoice" type="com.example.module.financial.model.FinanceReceiveInvoice" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+    <resultMap id="FinanceReceiveInvoice" type="com.example.module.financial.model.FinanceReceiveInvoice"
+               autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectReceiveInvoice" resultMap="FinanceReceiveInvoice">
         SELECT T.INPUT_INVOICE_HEAD_ID          AS "receiveInvoiceId",        --   收票id
@@ -315,9 +325,25 @@
           WHERE T.INPUT_INVOICE_HEAD_ID =TO_NUMBER(#{receiveInvoiceId})
     </select>
 
+    <select id="selectALLReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+        SELECT T.INPUT_INVOICE_HEAD_ID AS "receiveInvoiceId",
+               INVOICE_NUMBER        AS "invoiceNumber", --发票号
+               INVOICE_TYPE          AS "typeId", --发票类型ID
+               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                   2,'普通发票(纸)',
+                                   3,'专用发票（电）',
+                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
+               INVOICE_DATE    AS "invoiceDate", --发票日期
+               '' AS "deductTaxAmount", --除税金额
+               TAX_AMOUNT        AS "taxAmount", --税额
+               INVOICE_AMOUNT AS "totalAmount" --价税合计
+          FROM  AHZH_USER.FD_INPUT_INVOICE_LINE T
+    </select>
+
     <!-- 开票-->
     <resultMap id="FinanceOpenInvoice" type="com.example.module.financial.model.FinanceOpenInvoice" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectOpenInvoice" resultMap="FinanceOpenInvoice">
         SELECT T.OUTPUT_INVOICE_APPLY_ID            AS "openInvoiceId",       --   开票ID
@@ -391,8 +417,25 @@
           WHERE T.OUTPUT_INVOICE_APPLY_ID  =TO_NUMBER(#{openInvoiceId})
     </select>
 
+    <select id="selectAllOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoiceList">
+         SELECT T.OUTPUT_INVOICE_APPLY_ID AS "openInvoiceId",
+               INVOICE_NUMBER        AS "invoiceNumber", --发票号
+               INVOICE_TYPE          AS "typeId", --发票类型ID
+               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                   2,'普通发票(纸)',
+                                   3,'专用发票（电）',
+                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
+               INVOICE_DATE    AS "invoiceDate", --发票日期
+               '' AS "deductTaxAmount", --除税金额
+               TAX_AMOUNT        AS "taxAmount", --税额
+               INVOICE_AMOUNT  AS "totalAmount" --价税合计
+          FROM  AHZH_USER.FD_OUTPUT_INVOICE_LIST T
+    </select>
+
+
     <resultMap id="FinanceReceivables" type="com.example.module.financial.model.FinanceReceivables" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectReceivablese" resultMap="FinanceReceivables">
           SELECT T2.FIN_RECEIPT_VOUCHER_ID          AS "receivablesId",       --   收款单ID
@@ -452,7 +495,8 @@
     </select>
 
     <resultMap id="FinanceAdjustment" type="com.example.module.financial.model.FinanceAdjustment" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectAdjustment" resultMap="FinanceAdjustment">
         SELECT PROJECT_BALANCE_CHANGE_ID            AS "adjustmentId", -- 调整单ID
@@ -507,7 +551,8 @@
 
     <!-- 划款（扣款）-->
     <resultMap id="FinanceDrawMoney" type="com.example.module.financial.model.FinanceDrawMoney" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectDrawMoney" resultMap="FinanceDrawMoney">
             SELECT T.PROJECT_KK_APPLY_HEAD_ID            AS "drawMoneyId", --   划款单ID
@@ -551,7 +596,8 @@
 
     <!--付款（确认付款）-->
     <resultMap id="FinancePayment" type="com.example.module.financial.model.FinancePayment" autoMapping="true">
-        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
     </resultMap>
     <select id="selectPayingVoucher" resultMap="FinancePayment">
       SELECT T.FIN_PAYING_VOUCHERS_ID         AS "paymentId", -- 付款单ID
@@ -824,6 +870,21 @@
                )TT
        WHERE  T2.FD_PAYMENT_TYPE_ID(+)  = T.PAYMENT_TYPE
        AND TT.BILL_ID = T.PUR_PAYMENT_APPLY_HEAD_ID
+    </select>
+
+    <select id="selectAllExpenseCostList" resultType="com.example.module.financial.model.MapCostList">
+        SELECT T.BX_ID          AS "reimbursementId",    -- 报销id
+               ''               AS "addDate",               --  发生日期
+               FEE_ID           AS "costTypeId",            --  费用类别ID
+               FEE_NAME         AS "costTypeName",          --  费用类别名称
+               ''               AS "reimbursementUserName", --  实际报销人账号
+               USEOBJECT_NAME   AS "reimbursementRealName", --  实际报销人真实姓名
+               FEE_ORG_ID       AS "bearDepartmentId",      --  承担部门ID
+               NVL(SUBSTR(T.FEE_ORG_NAME, INSTR(T.FEE_ORG_NAME, '-', 1, 1) + 1), '')     AS "bearDepartmentName",    --  承担部门名称
+               ALLOW_BX_AMT      AS "applyAmount",          --  申请金额
+               ''               AS "taxRate",               --  可抵扣税率
+               ''               AS "taxAmount"              --  可抵扣税额
+          FROM  AHZH_USER.FIN_FEE_BX_LINE T
     </select>
 
 </mapper>

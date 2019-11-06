@@ -1,6 +1,11 @@
 package com.example.module.customer;
 
+import com.alibaba.excel.EasyExcel;
 import com.example.module.HelperService;
+import com.example.module.customer.model.Customer;
+import com.example.module.customer.model.CustomerReadListener;
+import com.example.module.excel.DemoData;
+import com.example.module.excel.Test;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -101,6 +107,14 @@ public class CustomerService {
             log.info("批量插入MongoDB 集合 :{} ", TABLE_NAME);
         }
         return reuslts;
+    }
+
+    //公海客户
+    @Transactional
+    public List<Customer> seasHandler(){
+        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("files/公海客户2019-11-04.xlsx");
+        EasyExcel.read(resourceAsStream, Customer.class,new CustomerReadListener()).sheet().doRead();
+        return null;
     }
 
 }

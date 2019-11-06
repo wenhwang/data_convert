@@ -49,6 +49,6 @@ public class ProjectInfo {
     private String businessUserName= StringUtils.EMPTY;
     private String businessUserId= StringUtils.EMPTY;
     private String delFlag= StringUtils.EMPTY;
-    private String status= StringUtils.EMPTY;
+    private String status = StringUtils.EMPTY;
     private String dataSource = "EPMS";
 }

@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Api(tags = "财务数据维护")
-@RequestMapping("/financial")
+@Api(tags = "财务数据-DB")
+@RequestMapping("/financialdb")
 public class FinancialController {
 
     @Autowired

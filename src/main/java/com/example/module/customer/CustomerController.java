@@ -43,5 +43,11 @@ public class CustomerController {
     public Result<List> labourCompanyHandler() {
         return Result.success(customerService.customerHandler("劳务单位"));
     }
+
+    @ApiOperation("公海客户")
+    @GetMapping("/seas")
+    public Result<List> seasHandler() {
+        return Result.success(customerService.seasHandler());
+    }
 }
 

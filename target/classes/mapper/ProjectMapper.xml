@@ -95,7 +95,7 @@
                NVL((SELECT COMPETITIVE_BRAND FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
                    '')                              AS "competeBrand",--  竞争品牌
                NVL(T.DEPT_ID, '')                   AS "departmentId",      --  所属部门ID
-               NVL(T.DEPT_NAME, '')                 AS "department",        --  所属部门
+               NVL(SUBSTR(T.DEPT_NAME, INSTR(T.DEPT_NAME, '-', 1, 1) + 1), '')                 AS "department",        --  所属部门
                NVL(T.HOLDER_ID, '')                 AS "ownerId",           --  业主ID
                NVL(T.HOLDER, '')                    AS "ownerName",         --  业主名称
                ''                                   AS "ownerPhone",        --  业主电话
@@ -107,6 +107,8 @@
                NVL((SELECT T2.PROJECT_DOCKET FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
                    '')                              AS "projectSummary",--  项目概述
                ''                                   AS "projectLogo",       --  项目LOGO
+               (SELECT SALES_ID FROM AHZH_USER.VIEW_PROJECT_SALESMAN T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "businessUserId",--业务负责人id
+               (SELECT SALES_NAME FROM AHZH_USER.VIEW_PROJECT_SALESMAN T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "businessUserName",--业务负责人id
                NVL(T.CREATE_BY, '')                 AS "createBy",          --  创建人
                NVL(T.MODIFY_BY, '')                 AS "updateBy",          --  修改人
                NVL(T.CREATE_DATE, '')               AS "createTime",        --  创建时间

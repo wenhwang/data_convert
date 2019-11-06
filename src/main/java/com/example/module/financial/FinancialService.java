@@ -64,10 +64,8 @@ public class FinancialService {
     //付款
     public static final String TABEL_FINANCE_PAYMENT = "finance_payment";
 
-
     @Transactional
     public List<FinanceReimbursement> expenseHandler() {
-
         //查询报销单
         List<FinanceReimbursement> reimbursements = financialMapper.selectExpenseSheet();
         log.info("已查询EPMS报销单数据:{} 条记录", reimbursements.size());

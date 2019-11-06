@@ -13,6 +13,7 @@ import com.example.module.financial.model.FinanceRepayment;
 import com.example.module.financial.model.FinanceReserveFund;
 import com.example.module.financial.model.MapCostList;
 import com.example.module.financial.model.MapInvoiceList;
+import com.example.module.financial.model.MapOpenInvoiceList;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -42,11 +43,17 @@ public interface FinancialMapper {
     //收票明细
     List<MapInvoiceList> selectReceiveInvoiceDetail(String receiveInvoiceId);
 
+    //收票明细
+    List<MapInvoiceList> selectALLReceiveInvoiceDetail();
+
     //开票
     List<FinanceOpenInvoice> selectOpenInvoice();
 
     //开票明细
     List<MapInvoiceList> selectOpenInvoiceDetail(String openInvoiceId);
+
+    //开票明细
+    List<MapOpenInvoiceList> selectAllOpenInvoiceDetail();
 
     //收款
     List<FinanceReceivables> selectReceivablese();
@@ -69,4 +76,6 @@ public interface FinancialMapper {
     //采购付款申请
     List<FinancePayment> selectPaymentApplyHead();
 
+    //所有报销单明细
+    List<MapCostList> selectAllExpenseCostList();
 }
