@@ -4,8 +4,6 @@ import com.alibaba.excel.EasyExcel;
 import com.example.module.HelperService;
 import com.example.module.customer.model.Customer;
 import com.example.module.customer.model.CustomerReadListener;
-import com.example.module.excel.DemoData;
-import com.example.module.excel.Test;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

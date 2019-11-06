@@ -39,7 +39,7 @@ import java.util.Objects;
 
 @Service
 @Slf4j
-public class FinancialLocalFileService {
+public class FinancialExportService {
     public static final String SAVE_PATH = new File("files/export/financial/").getPath();
     public static final String FILE_EXT = ".xlsx";
 
@@ -51,30 +51,6 @@ public class FinancialLocalFileService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
-
-    //报销单
-    public static final String TABEL_FINANCE_REIMBURSEMENT = "finance_reimbursement";
-    //还款单
-    public static final String TABEL_FINANCE_REPAYMENT = "finance_repayment";
-    //备用金
-    public static final String TABEL_FINANCE_RESERVE_FUND = "finance_reserve_fund";
-    //资金账号
-    public static final String TABEL_FINANCE_CAPITAL_ACCOUNT = "finance_capital_account";
-    //外经证
-    public static final String TABEL_FINANCE_BUSINESS_LICENSE = "finance_business_license";
-    //收票
-    public static final String TABEL_FINANCE_RECEIVE_INVOICE = "finance_receive_invoice";
-    //开票
-    public static final String TABEL_FINANCE_OPEN_INVOICE = "finance_open_invoice";
-    //收款
-    public static final String TABEL_FINANCE_RECEIVABLES = "finance_receivables";
-    //往来管理（调整单）
-    public static final String TABEL_FINANCE_ADJUSTMENT = "finance_adjustment";
-    //划款（扣款）
-    public static final String TABEL_FINANCE_DRAW_MONEY = "finance_draw_money";
-    //付款
-    public static final String TABEL_FINANCE_PAYMENT = "finance_payment";
-
 
     //报销单
     public List<FinanceReimbursement> expenseHandler(String funcName) {

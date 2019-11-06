@@ -29,12 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Api(tags = "财务数据-文件")
-@RequestMapping("/financialfile")
-public class FinancialImportLocalFileController {
+@Api(tags = "财务数据-导出文件")
+@RequestMapping("/financial-export")
+public class FinancialExportController {
 
     @Autowired
-    private FinancialLocalFileService financialLocalFileService;
+    private FinancialExportService financialLocalFileService;
 
     @ApiOperation("1. 报销单")
     @GetMapping("/expense")
