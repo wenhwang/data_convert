@@ -7,14 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Date;
 
 /**
- * 收票明细
+ * 开票明细
  *
  * @pdOid 50d70760-071c-4458-b71c-6fe91a8b9e97
  */
 @Data
-public class MapInvoiceList {
+public class MapOpenInvoice {
 
-    @ExcelProperty("收票id") private String receiveInvoiceId = StringUtils.EMPTY;
+    @ExcelProperty("开票ID") private String openInvoiceId = StringUtils.EMPTY;
     /**
      * 发票号
      *
@@ -57,7 +57,7 @@ public class MapInvoiceList {
      * @pdOid 9f4ee3a6-6058-429f-bf91-8c48acec16e7
      */
     @ExcelProperty("价税合计") private String totalAmount = StringUtils.EMPTY;
-
+    @ExcelProperty("登记日期") private String addDate = StringUtils.EMPTY;
     @ExcelProperty("税率") private double taxRate;
 
 }

@@ -39,7 +39,7 @@ public class CreateByFieldHandler implements TypeHandler<String>{
     public String getResult(ResultSet resultSet, String columnName) throws SQLException {
         String realName = resultSet.getString(columnName);
         String userName = helperService.findUserNameByRealName(realName);
-        log.info("createBy {} ---> {}",realName,userName);
+        //log.info("createBy {} ---> {}",realName,userName);
         return userName;
     }
 

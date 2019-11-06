@@ -14,9 +14,9 @@ import com.example.module.financial.model.FinanceReserveFund;
 import com.example.module.financial.model.MapCommodity;
 import com.example.module.financial.model.MapCostList;
 import com.example.module.financial.model.MapHandover;
-import com.example.module.financial.model.MapInvoiceList;
+import com.example.module.financial.model.MapInvoice;
 import com.example.module.financial.model.MapOpenCommodity;
-import com.example.module.financial.model.MapOpenInvoiceList;
+import com.example.module.financial.model.MapOpenInvoice;
 import com.example.module.financial.model.MapPayTax;
 import com.example.utils.Result;
 import io.swagger.annotations.Api;
@@ -101,8 +101,8 @@ public class FinancialExportController {
 
     @ApiOperation("6.1 收票-收票明细")
     @GetMapping("/receiveinvoice-detail")
-    public Result<List<MapInvoiceList>> receiveInvoiceDetailHandler(){
-        return  Result.<List<MapInvoiceList>>success(financialLocalFileService.receiveInvoiceDetailHandler("收票-收票明细"));
+    public Result<List<MapInvoice>> receiveInvoiceDetailHandler(){
+        return  Result.<List<MapInvoice>>success(financialLocalFileService.receiveInvoiceDetailHandler("收票-收票明细"));
     }
 
 
@@ -123,8 +123,8 @@ public class FinancialExportController {
     //开票-发票明细
     @ApiOperation("7.1 开票-开票明细")
     @GetMapping("/openinvoice-details")
-    public Result<List<MapOpenInvoiceList>> openInvoiceDetailHandler(){
-        return  Result.<List<MapOpenInvoiceList>>success(financialLocalFileService.openInvoiceDetailHandler("开票-开票明细"));
+    public Result<List<MapOpenInvoice>> openInvoiceDetailHandler(){
+        return  Result.<List<MapOpenInvoice>>success(financialLocalFileService.openInvoiceDetailHandler("开票-开票明细"));
     }
     //开票-商品明细
     @ApiOperation("7.2 开票-商品明细")

@@ -256,7 +256,7 @@ public class FinancialService {
         return drawMonies;
     }
 
-    @Transactional
+    //@Transactional
     public List<FinancePayment> paymentHandler() {
 
         List<FinancePayment> results = new ArrayList<>();
@@ -276,11 +276,11 @@ public class FinancialService {
 
         log.info("已查询付款（确认付款）数据:{} 条记录", payment_1.size());
         if (Objects.nonNull(payment_1)) {
-            mongoTemplate.insert(payment_1, TABEL_FINANCE_PAYMENT);
-            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             payment_1.parallelStream().forEach(p -> {
                 p.setMoneyTypeId(HelperService.replaceRefId(p.getMoneyTypeId(), typeMapList));
             });
+            mongoTemplate.insert(payment_1, TABEL_FINANCE_PAYMENT);
+            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             results.addAll(payment_1);
         }
 
@@ -288,11 +288,11 @@ public class FinancialService {
         List<FinancePayment> payment_2 = financialMapper.selectProjectMarginApply();
         log.info("已查询保证金付款数据:{} 条记录", payment_2.size());
         if (Objects.nonNull(payment_2)) {
-            mongoTemplate.insert(payment_2, TABEL_FINANCE_PAYMENT);
-            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             payment_2.parallelStream().forEach(p -> {
                 p.setMoneyTypeId(HelperService.replaceRefId(p.getMoneyTypeId(), typeMapList));
             });
+            mongoTemplate.insert(payment_2, TABEL_FINANCE_PAYMENT);
+            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             results.addAll(payment_2);
         }
 
@@ -300,11 +300,12 @@ public class FinancialService {
         List<FinancePayment> payment_3 = financialMapper.selectProjectPaymentApply();
         log.info("已查询项目付款数据:{} 条记录", payment_3.size());
         if (Objects.nonNull(payment_3)) {
-            mongoTemplate.insert(payment_3, TABEL_FINANCE_PAYMENT);
-            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             payment_3.parallelStream().forEach(p -> {
                 p.setMoneyTypeId(HelperService.replaceRefId(p.getMoneyTypeId(), typeMapList));
             });
+            mongoTemplate.insert(payment_3, TABEL_FINANCE_PAYMENT);
+            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
+
             results.addAll(payment_3);
         }
 
@@ -312,11 +313,11 @@ public class FinancialService {
         List<FinancePayment> payment_4 = financialMapper.selectPaymentApplyHead();
         log.info("已查询采购付款申请数据:{} 条记录", payment_4.size());
         if (Objects.nonNull(payment_4)) {
-            mongoTemplate.insert(payment_4, TABEL_FINANCE_PAYMENT);
-            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             payment_4.parallelStream().forEach(p -> {
                 p.setMoneyTypeId(HelperService.replaceRefId(p.getMoneyTypeId(), typeMapList));
             });
+            mongoTemplate.insert(payment_4, TABEL_FINANCE_PAYMENT);
+            log.info("保存数据 ---> :{} ", TABEL_FINANCE_PAYMENT);
             results.addAll(payment_4);
         }
         return results;

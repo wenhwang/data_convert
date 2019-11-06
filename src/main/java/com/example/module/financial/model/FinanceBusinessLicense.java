@@ -5,7 +5,9 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 外经证
@@ -209,6 +211,13 @@ public class FinanceBusinessLicense {
      * @pdOid 1b35e5c0-3b79-4867-9115-43878208b380
      */
     @ExcelProperty("修改时间") private Date updateTime;
-    @ExcelProperty("") private String isPrintInvoice = StringUtils.EMPTY; //外经证状态
+    //@ExcelProperty("") private String isPrintInvoice = StringUtils.EMPTY; //外经证状态
+
+    //外经证交接信息
+    @ExcelIgnore private List<MapHandover> handoverMap = new ArrayList<>();
+
+    //外经证完税信息
+    @ExcelIgnore private List<MapPayTax> payTaxMap = new ArrayList<>();
+
     @ExcelProperty("数据源") private String dataSource = "EPMS";
 }

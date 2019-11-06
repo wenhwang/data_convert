@@ -16,7 +16,7 @@
                FEE_APPLY_NO            AS "applyNumber",        --  费用申请单号
                CHAP_NAME               AS "applyUser",          --  申请人
                ORG_ID                  AS "departmentId",       --   申请部门ID
-               ORG_NAME                AS "departmentName",     --   申请部门名称
+               NVL(SUBSTR(ORG_NAME, INSTR(ORG_NAME, '-', 1, 1) + 1), '')                AS "departmentName",     --   申请部门名称
                BASE_BALANCE_TYPE_ID    AS "settlementWayId",    --  结算方式id
                (SELECT BALANCE_TYPE_NAME FROM  AHZH_USER.  BASE_BALANCE_TYPE T2 WHERE T2.BASE_BALANCE_TYPE_ID = T.BASE_BALANCE_TYPE_ID)       AS "settlementWay",      --  结算方式
                PROJECT_ID              AS "projectId",          --  项目id
@@ -310,7 +310,7 @@
    WHERE T.PUR_CONTRACT_CODE = TT.PUR_CONTRACT_CODE(+)
     </select>
 
-    <select id="selectReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+    <select id="selectReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoice">
         SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
                INVOICE_TYPE          AS "typeId", --发票类型ID
                DECODE(INVOICE_TYPE,1,'专用发票（纸）',
@@ -325,7 +325,7 @@
           WHERE T.INPUT_INVOICE_HEAD_ID =TO_NUMBER(#{receiveInvoiceId})
     </select>
 
-    <select id="selectALLReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+    <select id="selectALLReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoice">
         SELECT T.INPUT_INVOICE_HEAD_ID AS "receiveInvoiceId",
                INVOICE_NUMBER        AS "invoiceNumber", --发票号
                INVOICE_TYPE          AS "typeId", --发票类型ID
@@ -402,7 +402,7 @@
     </select>
 
     <!--开票明细-->
-    <select id="selectOpenInvoiceDetail" resultType="com.example.module.financial.model.MapInvoiceList">
+    <select id="selectOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoice">
           SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
                INVOICE_TYPE          AS "typeId", --发票类型ID
                DECODE(INVOICE_TYPE,1,'专用发票（纸）',
@@ -417,7 +417,7 @@
           WHERE T.OUTPUT_INVOICE_APPLY_ID  =TO_NUMBER(#{openInvoiceId})
     </select>
 
-    <select id="selectAllOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoiceList">
+    <select id="selectAllOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoice">
          SELECT T.OUTPUT_INVOICE_APPLY_ID AS "openInvoiceId",
                INVOICE_NUMBER        AS "invoiceNumber", --发票号
                INVOICE_TYPE          AS "typeId", --发票类型ID

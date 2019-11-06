@@ -228,7 +228,7 @@ public class FinanceReceiveInvoice {
      * @pdOid c8a668ab-a95e-4d97-9a2b-625c1f5aeee7
      */
     @ExcelIgnore
-    private List<MapInvoiceList> invoiceList = new ArrayList<>();
+    private List<MapInvoice> invoiceList = new ArrayList<>();
     /**
      * 备注
      *
@@ -287,6 +287,8 @@ public class FinanceReceiveInvoice {
     private String openWayName = StringUtils.EMPTY;
     @ExcelProperty("审批流程实例id")
     private String procInstId = StringUtils.EMPTY;
+    //商品明细
+    @ExcelIgnore private List<MapCommodity> commodityList = new ArrayList();
 
     @ExcelProperty("数据源")
     private String dataSource = "EPMS";

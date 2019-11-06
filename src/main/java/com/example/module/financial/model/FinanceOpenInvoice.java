@@ -231,7 +231,9 @@ public class FinanceOpenInvoice {
      *
      * @pdOid c8a668ab-a95e-4d97-9a2b-625c1f5aeee7
      */
-    @ExcelIgnore private List<MapInvoiceList> invoiceList = new ArrayList<>();
+    @ExcelIgnore private List<MapOpenInvoice> invoiceList = new ArrayList<>();
+
+    @ExcelIgnore private List<MapOpenCommodity> commodityList = new ArrayList<>();
 
     @ExcelProperty("审批流程实例id")
     private String procInstId = StringUtils.EMPTY;

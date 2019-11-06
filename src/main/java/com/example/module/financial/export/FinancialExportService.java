@@ -16,9 +16,9 @@ import com.example.module.financial.model.FinanceReserveFund;
 import com.example.module.financial.model.MapCommodity;
 import com.example.module.financial.model.MapCostList;
 import com.example.module.financial.model.MapHandover;
-import com.example.module.financial.model.MapInvoiceList;
+import com.example.module.financial.model.MapInvoice;
 import com.example.module.financial.model.MapOpenCommodity;
-import com.example.module.financial.model.MapOpenInvoiceList;
+import com.example.module.financial.model.MapOpenInvoice;
 import com.example.module.financial.model.MapPayTax;
 import com.example.utils.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -157,11 +156,11 @@ public class FinancialExportService {
 
     //外经证完税信息
     public List<MapPayTax> businessLicensePayTaxHandler(String funcName) {
-        List<MapPayTax> mapHandovers = new ArrayList<>();
+        List<MapPayTax> payTaxes = new ArrayList<>();
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,MapPayTax.class,mapHandovers);
-        return mapHandovers;
+        ExcelUtils.saveToFile(filePath,funcName,MapPayTax.class,payTaxes);
+        return payTaxes;
     }
 
     //收票
@@ -175,12 +174,12 @@ public class FinancialExportService {
     }
 
     //收票明细
-    public List<MapInvoiceList> receiveInvoiceDetailHandler(String funcName) {
-        List<MapInvoiceList> invoiceLists = financialMapper.selectALLReceiveInvoiceDetail();
+    public List<MapInvoice> receiveInvoiceDetailHandler(String funcName) {
+        List<MapInvoice> invoiceLists = financialMapper.selectALLReceiveInvoiceDetail();
         log.info("已查询收票明细数据:{} 条记录", invoiceLists.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,MapInvoiceList.class,invoiceLists);
+        ExcelUtils.saveToFile(filePath,funcName, MapInvoice.class,invoiceLists);
         return invoiceLists;
     }
 
@@ -204,12 +203,12 @@ public class FinancialExportService {
     }
 
     //开票明细
-    public List<MapOpenInvoiceList> openInvoiceDetailHandler(String funcName) {
-        List<MapOpenInvoiceList> openInvoiceDetails = financialMapper.selectAllOpenInvoiceDetail();
+    public List<MapOpenInvoice> openInvoiceDetailHandler(String funcName) {
+        List<MapOpenInvoice> openInvoiceDetails = financialMapper.selectAllOpenInvoiceDetail();
         log.info("已查询开票明细数据:{} 条记录", openInvoiceDetails.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,MapOpenInvoiceList.class,openInvoiceDetails);
+        ExcelUtils.saveToFile(filePath,funcName, MapOpenInvoice.class,openInvoiceDetails);
         return openInvoiceDetails;
     }
 
