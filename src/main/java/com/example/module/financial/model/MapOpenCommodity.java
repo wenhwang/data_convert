@@ -7,7 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 //开票-商品明细
 @Data
 public class MapOpenCommodity {
-    @ExcelProperty("开票id") private String openInvoiceId = StringUtils.EMPTY;
+   // @ExcelProperty("开票id") private String openInvoiceId = StringUtils.EMPTY;
+    @ExcelProperty("开票明细ID") private String openInvoiceDetailId = StringUtils.EMPTY;
     @ExcelProperty("商品id")
     private String commodityId = StringUtils.EMPTY;
     @ExcelProperty("商品编码")

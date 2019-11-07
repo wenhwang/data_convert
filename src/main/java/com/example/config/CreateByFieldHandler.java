@@ -2,6 +2,7 @@ package com.example.config;
 
 import com.example.module.HelperService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
@@ -9,11 +10,18 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 public class CreateByFieldHandler implements TypeHandler<String>{
 
+
     HelperService helperService = SpringContextHolder.getBean(HelperService.class);
+    List<Map> allUserNames = helperService.findAllUserName();
 
     /**
      * 用于定义在Mybatis设置参数时该如何把Java类型的参数转换为对应的数据库类型
@@ -38,8 +46,15 @@ public class CreateByFieldHandler implements TypeHandler<String>{
     @Override
     public String getResult(ResultSet resultSet, String columnName) throws SQLException {
         String realName = resultSet.getString(columnName);
-        String userName = helperService.findUserNameByRealName(realName);
-        //log.info("createBy {} ---> {}",realName,userName);
+        realName = StringUtils.isEmpty(realName) ? StringUtils.EMPTY : realName;
+        String finalRealName = realName;
+        String userName = allUserNames.stream()
+                .filter(r -> finalRealName.equals(r.get("realName")))
+                .findFirst()
+                .orElseGet(() -> {Map<String,String> defaultMap = new HashMap<>();defaultMap.put("username",finalRealName);return defaultMap;})
+                .get("username")+"";
+        // String userName = helperService.findUserNameByRealName(realName);
+        log.info("createBy {} ---> {}",realName,userName);
         return userName;
     }
 

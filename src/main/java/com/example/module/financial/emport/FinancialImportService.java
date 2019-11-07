@@ -92,7 +92,7 @@ public class FinancialImportService {
         List<MapCostList> costLists = new ArrayList<>();
 
         log.info("|__ 1. 报销单明细");
-        ExcelUtils.read(SAVE_PATH + "/报销单明细.xlsx", MapCostList.class, new AnalysisEventListener<MapCostList>() {
+        ExcelUtils.read(SAVE_PATH + "/1.1 报销单明细.xlsx", MapCostList.class, new AnalysisEventListener<MapCostList>() {
             @Override
             public void invoke(MapCostList data, AnalysisContext context) {
                 data.setCostTypeId(HelperService.replaceRefId(data.getCostTypeName(), costTypes));
@@ -110,7 +110,7 @@ public class FinancialImportService {
 
         log.info("|__ 2. 报销单");
         List<FinanceReimbursement> reimbursements = new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/报销单.xlsx", FinanceReimbursement.class, new AnalysisEventListener<FinanceReimbursement>() {
+        ExcelUtils.read(SAVE_PATH + "/1 报销单.xlsx", FinanceReimbursement.class, new AnalysisEventListener<FinanceReimbursement>() {
             @Override
             public void invoke(FinanceReimbursement data, AnalysisContext context) {
 
@@ -146,11 +146,11 @@ public class FinancialImportService {
 
     //还款单
     @Transactional
-    public List<FinanceRepayment> repaymentHandler(String funcName) {
+    public List<FinanceRepayment> repaymentHandler() {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 还款单 ");
         List<FinanceRepayment> financeRepayments = new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/还款单.xlsx", FinanceRepayment.class, new AnalysisEventListener<FinanceRepayment>() {
+        ExcelUtils.read(SAVE_PATH + "/2 还款单.xlsx", FinanceRepayment.class, new AnalysisEventListener<FinanceRepayment>() {
             @Override
             public void invoke(FinanceRepayment data, AnalysisContext context) {
                 financeRepayments.add(data);
@@ -172,11 +172,11 @@ public class FinancialImportService {
 
     //备用金（借款）
     @Transactional
-    public List<FinanceReserveFund> reserveFundHandler(String funcName) {
+    public List<FinanceReserveFund> reserveFundHandler() {
         List<FinanceReserveFund> reserveFunds = new ArrayList<>();;
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 备用金（借款） ");
-        ExcelUtils.read(SAVE_PATH + "/备用金（借款）.xlsx", FinanceReserveFund.class, new AnalysisEventListener<FinanceReserveFund>() {
+        ExcelUtils.read(SAVE_PATH + "/3 备用金（借款）.xlsx", FinanceReserveFund.class, new AnalysisEventListener<FinanceReserveFund>() {
             @Override
             public void invoke(FinanceReserveFund data, AnalysisContext context) {
                 reserveFunds.add(data);
@@ -198,7 +198,7 @@ public class FinancialImportService {
 
     //资金账号
     @Transactional
-    public List<FinanceCapitalAccount> capitalAccountHandler(String funcName) {
+    public List<FinanceCapitalAccount> capitalAccountHandler() {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 资金账号 ");
         //account_money_type
@@ -207,7 +207,7 @@ public class FinancialImportService {
         List<Map> bankAccountTypes = helperService.query("label", "银行帐户类型", new String[]{"dictId", "dictName"}, "sys_dict");
         List<FinanceCapitalAccount> capitalAccounts = new ArrayList<>();
 
-        ExcelUtils.read(SAVE_PATH + "/资金账号.xlsx", FinanceCapitalAccount.class, new AnalysisEventListener<FinanceCapitalAccount>() {
+        ExcelUtils.read(SAVE_PATH + "/4 资金账号.xlsx", FinanceCapitalAccount.class, new AnalysisEventListener<FinanceCapitalAccount>() {
             @Override
             public void invoke(FinanceCapitalAccount data, AnalysisContext context) {
                 //账户资金类型
@@ -240,14 +240,14 @@ public class FinancialImportService {
 
     //外经证
     @Transactional
-    public List<FinanceBusinessLicense> businessLicenseHandler(String funcName) {
+    public List<FinanceBusinessLicense> businessLicenseHandler() {
 
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 外经证 ");
 
         //外经证完税信息
         List<MapPayTax> payTaxes = new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/5.2 外经证完税信息 .xlsx", MapPayTax.class, new AnalysisEventListener<MapPayTax>() {
+        ExcelUtils.read(SAVE_PATH + "/5.2 外经证完税信息.xlsx", MapPayTax.class, new AnalysisEventListener<MapPayTax>() {
             @Override
             public void invoke(MapPayTax data, AnalysisContext context) {
                 payTaxes.add(data);
@@ -313,7 +313,7 @@ public class FinancialImportService {
     }
 
     //收票
-    public List<FinanceReceiveInvoice> receiveInvoiceHandler(String funcName) {
+    public List<FinanceReceiveInvoice> receiveInvoiceHandler() {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 收票 ");
         log.info("|__ 1. 收票明细");
@@ -326,10 +326,6 @@ public class FinancialImportService {
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
         });
-        Map<String, List<MapInvoice>> invoiceGroupMaps = invoices
-                .stream()
-                .collect(Collectors.groupingBy(MapInvoice::getReceiveInvoiceId));
-        log.info("|__ import  Invoice {} record data and has {} group record",invoices.size(),invoiceGroupMaps.size());
 
 
         log.info("|__ 2. 商品明细");
@@ -344,8 +340,25 @@ public class FinancialImportService {
         });
         Map<String, List<MapCommodity>> prodsGroupMaps = commodities
                 .stream()
-                .collect(Collectors.groupingBy(MapCommodity::getReceiveInvoiceId));
+                .collect(Collectors.groupingBy(MapCommodity::getReceiveInvoiceDetailId));
         log.info("|__ import  Commodity {} record data and has {} group record",commodities.size(),prodsGroupMaps.size());
+
+
+        //收票明细商品
+        invoices.parallelStream().forEach(mapInvoice -> {
+            String receiveInvoiceId = mapInvoice.getReceiveInvoiceId();
+            if(!prodsGroupMaps.containsKey(receiveInvoiceId)){
+                log.warn("|__ invoice Number: {} no found detail data",mapInvoice.getInvoiceNumber());
+                return;
+            }
+            mapInvoice.setCommodityList(prodsGroupMaps.get(receiveInvoiceId));
+        });
+
+        Map<String, List<MapInvoice>> invoiceGroupMaps = invoices
+                .stream()
+                .collect(Collectors.groupingBy(MapInvoice::getReceiveInvoiceId));
+        log.info("|__ import  Invoice {} record data and has {} group record",invoices.size(),invoiceGroupMaps.size());
+
 
 
         log.info("|__ 3. 收票信息");
@@ -359,11 +372,6 @@ public class FinancialImportService {
                     log.warn("|__ invoices: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setInvoiceList(invoiceGroupMaps.get(receiveInvoiceId));
-
-                if(!prodsGroupMaps.containsKey(receiveInvoiceId)){
-                    log.warn("|__ commodities: {} no found detail data",data.getSysNumber() );
-                }else
-                    data.setCommodityList(prodsGroupMaps.get(receiveInvoiceId));
 
                 receiveInvoices.add(data);
             }
@@ -384,13 +392,13 @@ public class FinancialImportService {
     }
 
     //开票
-    public List<FinanceOpenInvoice> openInvoiceHandler(String funcName) {
+    public List<FinanceOpenInvoice> openInvoiceHandler() {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 开票 ");
 
         log.info("|__ 1. 开票明细");
         List<MapOpenInvoice> openInvoiceDetails = new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/7.2 开票 - 发票明细 .xlsx", MapOpenInvoice.class, new AnalysisEventListener<MapOpenInvoice>() {
+        ExcelUtils.read(SAVE_PATH + "/7.2 开票 - 发票明细.xlsx", MapOpenInvoice.class, new AnalysisEventListener<MapOpenInvoice>() {
             @Override
             public void invoke(MapOpenInvoice data, AnalysisContext context) {
                 openInvoiceDetails.add(data);
@@ -398,15 +406,11 @@ public class FinancialImportService {
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
         });
-        Map<String, List<MapOpenInvoice>> invoiceGroupMaps = openInvoiceDetails
-                .stream()
-                .collect(Collectors.groupingBy(MapOpenInvoice::getOpenInvoiceId));
-        log.info("|__ import Open Invoice {} record data and has {} group record",openInvoiceDetails.size(),invoiceGroupMaps.size());
 
 
         log.info("|__ 2. 商品明细");
         List<MapOpenCommodity> openCommodities = new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/7.1 开票 - 商品明细 .xlsx", MapOpenCommodity.class, new AnalysisEventListener<MapOpenCommodity>() {
+        ExcelUtils.read(SAVE_PATH + "/7.1 开票 - 商品明细.xlsx", MapOpenCommodity.class, new AnalysisEventListener<MapOpenCommodity>() {
             @Override
             public void invoke(MapOpenCommodity data, AnalysisContext context) {
                 openCommodities.add(data);
@@ -416,13 +420,29 @@ public class FinancialImportService {
         });
         Map<String, List<MapOpenCommodity>> prodsGroupMaps = openCommodities
                 .stream()
-                .collect(Collectors.groupingBy(MapOpenCommodity::getOpenInvoiceId));
+                .collect(Collectors.groupingBy(MapOpenCommodity::getOpenInvoiceDetailId));
         log.info("|__ import Open Commodity {} record data and has {} group record",openCommodities.size(),prodsGroupMaps.size());
+
+        //开票商品明细
+        openInvoiceDetails.parallelStream().forEach(mapOpenInvoice -> {
+            String openInvoiceDetailId = mapOpenInvoice.getOpenInvoiceDetailId();
+            if(!prodsGroupMaps.containsKey(openInvoiceDetailId)){
+                log.warn("|__ open invoice Number: {} no found detail data",mapOpenInvoice.getInvoiceNumber());
+                return;
+            }
+            mapOpenInvoice.setCommodityList(prodsGroupMaps.get(openInvoiceDetailId));
+        });
+
+
+        Map<String, List<MapOpenInvoice>> invoiceGroupMaps = openInvoiceDetails
+                .stream()
+                .collect(Collectors.groupingBy(MapOpenInvoice::getOpenInvoiceId));
+        log.info("|__ import Open Invoice {} record data and has {} group record",openInvoiceDetails.size(),invoiceGroupMaps.size());
 
 
         log.info("|__ 3. 开票信息");
         List<FinanceOpenInvoice> openInvoices =  new ArrayList<>();
-        ExcelUtils.read(SAVE_PATH + "/7 开票 .xlsx", FinanceOpenInvoice.class, new AnalysisEventListener<FinanceOpenInvoice>() {
+        ExcelUtils.read(SAVE_PATH + "/7 开票.xlsx", FinanceOpenInvoice.class, new AnalysisEventListener<FinanceOpenInvoice>() {
             @Override
             public void invoke(FinanceOpenInvoice data, AnalysisContext context) {
 
@@ -431,18 +451,11 @@ public class FinancialImportService {
                     log.warn("|__ open invoices: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setInvoiceList(invoiceGroupMaps.get(openInvoiceId));
-
-                if(!prodsGroupMaps.containsKey(openInvoiceId)){
-                    log.warn("|__ open commodities: {} no found detail data",data.getSysNumber() );
-                }else
-                    data.setCommodityList(prodsGroupMaps.get(openInvoiceId));
-
                 openInvoices.add(data);
             }
 
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
-
         });
 
         log.info("|__ import {} record data",openInvoices.size());
@@ -452,7 +465,6 @@ public class FinancialImportService {
             log.info("|__ save to {} ", TABEL_FINANCE_OPEN_INVOICE);
         }
         log.info("|------------------------------------------------------------------------|");
-
         return openInvoices;
     }
 
@@ -549,9 +561,10 @@ public class FinancialImportService {
     }
 
     //收款
-    public List<FinanceReceivables> receivablesHandler(String funcName) {
+    public List<FinanceReceivables> receivablesHandler() {
 
-
+        log.info("|------------------------------------------------------------------------|");
+        log.info("|__ begin import 收款 ");
         //查询所有的收款类型
         String[] types = new String[]{"资金转换类-收款-款项类型",//trans_payment_in_type
                 "筹资类-收款-款项类型",//financing_payment_in_type
@@ -561,42 +574,59 @@ public class FinancialImportService {
         Query query = Query.query(criteria);
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
-        List<FinanceReceivables> receivablesList = financialMapper.selectReceivablese();
+        List<FinanceReceivables> receivablesList = new ArrayList<>();
 
+        ExcelUtils.read(SAVE_PATH + "/13 收款.xlsx", FinanceReceivables.class, new AnalysisEventListener<FinanceReceivables>() {
+            @Override
+            public void invoke(FinanceReceivables data, AnalysisContext context) {
+                data.setReceivablesTypeId(HelperService.replaceRefId(data.getReceivablesTypeId(), typeMapList));
+                receivablesList.add(data);
+            }
+            @Override
+            public void doAfterAllAnalysed(AnalysisContext context) { }
+        });
 
+        log.info("|__ import {} record data",receivablesList.size());
 
-        log.info("已查询收款数据:{} 条记录", receivablesList.size());
-        if (!Objects.isNull(receivablesList)) {
-            receivablesList.parallelStream().forEach(p -> {
-                p.setReceivablesTypeId(HelperService.replaceRefId(p.getReceivablesTypeId(), typeMapList));
-            });
+        if (Objects.nonNull(receivablesList)) {
+            mongoTemplate.insert(receivablesList, TABEL_FINANCE_RECEIVABLES);
+            log.info("|__ save to {} ", TABEL_FINANCE_RECEIVABLES);
         }
-        String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
-        log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,FinanceReceivables.class,receivablesList);
+        log.info("|------------------------------------------------------------------------|");
         return receivablesList;
     }
 
 
     //往来管理（调整单）
-    public List<FinanceAdjustment> adjustmentHandler(String funcName) {
-        List<FinanceAdjustment> adjustments = financialMapper.selectAdjustment();
+    public List<FinanceAdjustment> adjustmentHandler() {
+        log.info("|------------------------------------------------------------------------|");
+        log.info("|__ begin import 往来管理（调整单） ");
         List<Map> changeObjectTypes = helperService.query("label", "调整对象", new String[]{"dictId", "dictName"}, "sys_dict");
-        log.info("已查询往来管理（调整单）数据:{} 条记录", adjustments.size());
+        List<FinanceAdjustment> adjustments = new ArrayList<>();
+        ExcelUtils.read(SAVE_PATH + "/14 往来管理（调整单）.xlsx", FinanceAdjustment.class, new AnalysisEventListener<FinanceAdjustment>() {
+            @Override
+            public void invoke(FinanceAdjustment data, AnalysisContext context) {
+                data.setObjectId(HelperService.replaceRefId(data.getObjectName(), changeObjectTypes));
+                adjustments.add(data);
+            }
+            @Override
+            public void doAfterAllAnalysed(AnalysisContext context) { }
+        });
+
+        log.info("|__ import {} record data",adjustments.size());
+
         if (!Objects.isNull(adjustments)) {
-            adjustments.parallelStream().forEach(f -> {
-                //开票明细
-                f.setObjectId(HelperService.replaceRefId(f.getObjectName(), changeObjectTypes));
-            });
+            mongoTemplate.insert(adjustments, TABEL_FINANCE_ADJUSTMENT);
+            log.info("|__ save to {} ",TABEL_FINANCE_ADJUSTMENT);
         }
-        String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
-        log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,FinanceAdjustment.class,adjustments);
+        log.info("|------------------------------------------------------------------------|");
         return adjustments;
     }
 
     //划款（扣款）
-    public List<FinanceDrawMoney> drawMoneyHandler(String funcName) {
+    public List<FinanceDrawMoney> drawMoneyHandler() {
+        log.info("|------------------------------------------------------------------------|");
+        log.info("|__ begin import 往来管理（调整单） ");
         //查询资金转换类-收款-款项类型 trans_payment_in_type
         String[] types = new String[]{"trans_payment_type"};
         Criteria criteria = Criteria.where("label").in(types).and("isEnable").is("0").and("delFlag").is("0");
@@ -604,16 +634,24 @@ public class FinancialImportService {
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
 
-        List<FinanceDrawMoney> drawMonies = financialMapper.selectDrawMoney();
-        log.info("已查询划款（扣款）数据:{} 条记录", drawMonies.size());
+        List<FinanceDrawMoney> drawMonies = new ArrayList<>();
+        ExcelUtils.read(SAVE_PATH + "/14 往来管理（调整单）.xlsx", FinanceDrawMoney.class, new AnalysisEventListener<FinanceDrawMoney>() {
+            @Override
+            public void invoke(FinanceDrawMoney data, AnalysisContext context) {
+                data.setMoneyTypeId(HelperService.replaceRefId(data.getMoneyTypeName(), typeMapList));
+                drawMonies.add(data);
+            }
+            @Override
+            public void doAfterAllAnalysed(AnalysisContext context) { }
+        });
+
+        log.info("|__ import {} record data",drawMonies.size());
+
         if (!Objects.isNull(drawMonies)) {
-            drawMonies.parallelStream().forEach(p -> {
-                p.setMoneyTypeId(HelperService.replaceRefId(p.getMoneyTypeName(), typeMapList));
-            });
+            mongoTemplate.insert(drawMonies, TABEL_FINANCE_DRAW_MONEY);
+            log.info("|__ save to {} ",TABEL_FINANCE_DRAW_MONEY);
         }
-        String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
-        log.info("save to File:{}",filePath);
-        ExcelUtils.saveToFile(filePath,funcName,FinanceDrawMoney.class,drawMonies);
+        log.info("|------------------------------------------------------------------------|");
         return drawMonies;
     }
 

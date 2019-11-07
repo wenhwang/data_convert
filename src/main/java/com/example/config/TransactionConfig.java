@@ -5,10 +5,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 
-@Configuration
+//@Configuration
 public class TransactionConfig {
 
-    @Bean
+  //  @Bean
     MongoTransactionManager transactionManager(MongoDbFactory factory){
         return new MongoTransactionManager(factory);
     }

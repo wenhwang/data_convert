@@ -6,7 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 //收票-商品明细
 @Data
 public class MapCommodity {
-    @ExcelProperty("收票id") private String receiveInvoiceId = StringUtils.EMPTY;
+    //@ExcelProperty("收票id") private String receiveInvoiceId = StringUtils.EMPTY;
+    @ExcelProperty("收票明细ID") private String receiveInvoiceDetailId = StringUtils.EMPTY;
     @ExcelProperty("商品id")
     private String commodityId = StringUtils.EMPTY;
     @ExcelProperty("商品编码")

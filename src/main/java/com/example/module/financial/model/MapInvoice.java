@@ -1,10 +1,13 @@
 package com.example.module.financial.model;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 收票明细
@@ -15,6 +18,7 @@ import java.util.Date;
 public class MapInvoice {
 
     @ExcelProperty("收票id") private String receiveInvoiceId = StringUtils.EMPTY;
+    @ExcelProperty("收票明细ID") private String receiveInvoiceDetailId = StringUtils.EMPTY;
     /**
      * 发票号
      *
@@ -57,6 +61,11 @@ public class MapInvoice {
      * @pdOid 9f4ee3a6-6058-429f-bf91-8c48acec16e7
      */
     @ExcelProperty("价税合计") private String totalAmount = StringUtils.EMPTY;
+
+    //商品明细
+    @ExcelIgnore
+    private List<MapCommodity> commodityList = new ArrayList();
+
 
     @ExcelProperty("税率") private double taxRate;
 

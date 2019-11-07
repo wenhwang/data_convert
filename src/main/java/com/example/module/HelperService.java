@@ -51,6 +51,19 @@ public class HelperService {
         return result;
     }
 
+    public List<Map> query(String[] returnFields, String collectionName){
+        Criteria criteria = Criteria.where("delFlag").is("0");
+        Query query = Query.query(criteria);
+        Field fields = query.fields();
+        for (String returnField : returnFields) {
+            fields.include(returnField);
+        }
+        fields.exclude("_id");
+        List<Map> result = mongoTemplate.find(query, Map.class, collectionName);
+        return result;
+    }
+
+
     public <T> List<T> query(String fieldName, String fieldVal, String returnField, String collectionName,Class<T> returnClass){
         Criteria criteria = Criteria.where(fieldName).is(fieldVal)/*.and("isEnable").is("0")*/.and("delFlag").is("0");
         Query query = Query.query(criteria);
@@ -81,6 +94,11 @@ public class HelperService {
         defaultMap.put("username",realName);
         List<Map> results = this.query("realName", realName, "username", "sys_user",Map.class);
         return Optional.ofNullable(results).orElseGet(() -> (List<Map>) defaultMap).stream().findFirst().orElseGet(() -> defaultMap).get("username")+"";
+    }
+
+    public  List<Map> findAllUserName(){
+        List<Map> results = this.query(new String[]{"realName", "username"}, "sys_user");
+        return results;
     }
 
 }

@@ -233,8 +233,6 @@ public class FinanceOpenInvoice {
      */
     @ExcelIgnore private List<MapOpenInvoice> invoiceList = new ArrayList<>();
 
-    @ExcelIgnore private List<MapOpenCommodity> commodityList = new ArrayList<>();
-
     @ExcelProperty("审批流程实例id")
     private String procInstId = StringUtils.EMPTY;
     @ExcelProperty("数据源") private String dataSource = "EPMS";

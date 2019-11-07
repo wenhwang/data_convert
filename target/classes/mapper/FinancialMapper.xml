@@ -54,7 +54,7 @@
                ''               AS "reimbursementUserName", --  实际报销人账号
                USEOBJECT_NAME   AS "reimbursementRealName", --  实际报销人真实姓名
                FEE_ORG_ID       AS "bearDepartmentId",      --  承担部门ID
-               FEE_ORG_NAME     AS "bearDepartmentName",    --  承担部门名称
+               NVL(SUBSTR(FEE_ORG_NAME, INSTR(FEE_ORG_NAME, '-', 1, 1) + 1), '')     AS "bearDepartmentName",    --  承担部门名称
                ALLOW_BX_AMT      AS "applyAmount",          --  申请金额
                ''               AS "taxRate",               --  可抵扣税率
                ''               AS "taxAmount"              --  可抵扣税额
@@ -207,8 +207,8 @@
                 FROM  AHZH_USER.VIEW_BASE_PROJECT T2
                 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "projectNumber", --     项目编号
                 TT.PROJECT_CONTRACT_ID                AS "contractId", --      合同ID
-                TT.PROJECT_CONTRACT_CODE              AS "contractName", --      合同名称
-                TT.PROJECT_CONTRACT_NAME              AS "contractNumber", --      合同编号
+                TT.PROJECT_CONTRACT_NAME              AS "contractName", --      合同名称
+                TT.PROJECT_CONTRACT_CODE              AS "contractNumber", --      合同编号
                 TT.CONTRACT_AMOUNT                    AS "contractAmount", --      合同金额
                 (SELECT T2.HOLDER_ID
                 FROM  AHZH_USER.VIEW_BASE_PROJECT T2
@@ -281,7 +281,8 @@
          DECODE(T.INVOICE_CLASS,1,'材料', 2,'费用',3,'劳务',INVOICE_CLASS)    AS "businessTypeName",               --      发票业务类型名称
          ''                      AS "taxRate",                        --     税率
          T.INVOICE_QTY             AS "number",                         --      发票张数
-         T.INVOICE_AMOUNT         AS "invoiceAmount",                  --     本次收票金额
+         T.INVOICE_AMOUNT         AS "totalInvoiceAmount",                  --  发票总额
+         T.INVOICE_AMOUNT- T.TAX_AMOUNT        AS "invoiceAmount",          --     本次收票金额
          T.TAX_AMOUNT             AS "taxAmount",                      --     本次收票税额
          TT.INVOICE_AMOUNT                      AS "alreadyReceiveAmount",           --      已收票金额
          ''                      AS "totalReceiveAmount",             --      累计收票金额
@@ -312,13 +313,14 @@
 
     <select id="selectReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoice">
         SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
+               T.INPUT_INVOICE_LINE_ID AS "receiveInvoiceDetailId",-- 收票明细ID
                INVOICE_TYPE          AS "typeId", --发票类型ID
                DECODE(INVOICE_TYPE,1,'专用发票（纸）',
                                    2,'普通发票(纸)',
                                    3,'专用发票（电）',
                                    4,'普通发票(电)','') AS "typeName", --发票类型名称
                INVOICE_DATE    AS "invoiceDate", --发票日期
-               '' AS "deductTaxAmount", --除税金额
+               INVOICE_AMOUNT - TAX_AMOUNT AS "deductTaxAmount", --除税金额
                TAX_AMOUNT        AS "taxAmount", --税额
                INVOICE_AMOUNT AS "totalAmount" --价税合计
           FROM  AHZH_USER.FD_INPUT_INVOICE_LINE T
@@ -326,18 +328,19 @@
     </select>
 
     <select id="selectALLReceiveInvoiceDetail" resultType="com.example.module.financial.model.MapInvoice">
-        SELECT T.INPUT_INVOICE_HEAD_ID AS "receiveInvoiceId",
-               INVOICE_NUMBER        AS "invoiceNumber", --发票号
-               INVOICE_TYPE          AS "typeId", --发票类型ID
-               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+       SELECT T.INPUT_INVOICE_HEAD_ID AS "receiveInvoiceId", --收票id
+              T.INPUT_INVOICE_LINE_ID AS "receiveInvoiceDetailId",-- 收票明细ID
+              INVOICE_NUMBER        AS "invoiceNumber", --发票号
+              INVOICE_TYPE          AS "typeId", --发票类型ID
+              DECODE(INVOICE_TYPE,1,'专用发票（纸）',
                                    2,'普通发票(纸)',
                                    3,'专用发票（电）',
                                    4,'普通发票(电)','') AS "typeName", --发票类型名称
-               INVOICE_DATE    AS "invoiceDate", --发票日期
-               '' AS "deductTaxAmount", --除税金额
-               TAX_AMOUNT        AS "taxAmount", --税额
-               INVOICE_AMOUNT AS "totalAmount" --价税合计
-          FROM  AHZH_USER.FD_INPUT_INVOICE_LINE T
+              INVOICE_DATE    AS "invoiceDate", --发票日期
+              INVOICE_AMOUNT - TAX_AMOUNT AS "deductTaxAmount", --除税金额
+              TAX_AMOUNT        AS "taxAmount", --税额
+              INVOICE_AMOUNT AS "totalAmount" --价税合计
+       FROM  AHZH_USER.FD_INPUT_INVOICE_LINE T
     </select>
 
     <!-- 开票-->
@@ -368,10 +371,10 @@
                ''                                 AS "payWayId",            --    支付方式Id
                ''                                 AS "payWay",              --    支付方式
                ''                                 AS "overInvoiceAmount",   --   已开票金额
-               T.APPLY_AMOUNT   AS "applyInvoiceAmount",  --    申请开票金额
-               ''                                 AS "actualInvoiceAmount", --   实际开票金额
-               ''                                 AS "totalInvoiceAmount",  --    累计开票金额
-               T.TAX_RATE                           AS "taxRate",             --   税率
+               T.APPLY_AMOUNT                     AS "applyInvoiceAmount",  --    申请开票金额
+               T.APPLY_AMOUNT                     AS "actualInvoiceAmount", --   实际开票金额
+               T.TOTAL_AMOUNT                     AS "totalInvoiceAmount",  --    累计开票金额
+               T.TAX_RATE                         AS "taxRate",             --   税率
                (SELECT T2.PARTNER_ID FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID) AS "partnerId", --     合伙人id
                (SELECT T2.PARTNER FROM  AHZH_USER.VIEW_BASE_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)    AS "partnerName", --     合伙人名称
                ''                                 AS "invoiceBasis",        --    开票依据
@@ -403,32 +406,34 @@
 
     <!--开票明细-->
     <select id="selectOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoice">
-          SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
-               INVOICE_TYPE          AS "typeId", --发票类型ID
-               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
-                                   2,'普通发票(纸)',
-                                   3,'专用发票（电）',
-                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
-               INVOICE_DATE    AS "invoiceDate", --发票日期
-               '' AS "deductTaxAmount", --除税金额
-               TAX_AMOUNT        AS "taxAmount", --税额
-               INVOICE_AMOUNT  AS "totalAmount" --价税合计
-          FROM  AHZH_USER.FD_OUTPUT_INVOICE_LIST T
-          WHERE T.OUTPUT_INVOICE_APPLY_ID  =TO_NUMBER(#{openInvoiceId})
+        SELECT INVOICE_NUMBER        AS "invoiceNumber", --发票号
+                T.OUTPUT_INVOICE_LIST_ID  AS "openInvoiceDetailId", --开票明细ID
+                INVOICE_TYPE          AS "typeId", --发票类型ID
+                DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                               2,'普通发票(纸)',
+                               3,'专用发票（电）',
+                               4,'普通发票(电)','') AS "typeName", --发票类型名称
+                INVOICE_DATE    AS "invoiceDate", --发票日期
+                INVOICE_AMOUNT - TAX_AMOUNT AS "deductTaxAmount", --除税金额
+                TAX_AMOUNT        AS "taxAmount", --税额
+                INVOICE_AMOUNT  AS "totalAmount" --价税合计
+        FROM  AHZH_USER.FD_OUTPUT_INVOICE_LIST T
+        WHERE T.OUTPUT_INVOICE_APPLY_ID  =TO_NUMBER(#{openInvoiceId})
     </select>
 
     <select id="selectAllOpenInvoiceDetail" resultType="com.example.module.financial.model.MapOpenInvoice">
-         SELECT T.OUTPUT_INVOICE_APPLY_ID AS "openInvoiceId",
-               INVOICE_NUMBER        AS "invoiceNumber", --发票号
-               INVOICE_TYPE          AS "typeId", --发票类型ID
-               DECODE(INVOICE_TYPE,1,'专用发票（纸）',
-                                   2,'普通发票(纸)',
-                                   3,'专用发票（电）',
-                                   4,'普通发票(电)','') AS "typeName", --发票类型名称
-               INVOICE_DATE    AS "invoiceDate", --发票日期
-               '' AS "deductTaxAmount", --除税金额
-               TAX_AMOUNT        AS "taxAmount", --税额
-               INVOICE_AMOUNT  AS "totalAmount" --价税合计
+         SELECT T.OUTPUT_INVOICE_APPLY_ID AS "openInvoiceId", -- "开票ID"
+                T.OUTPUT_INVOICE_LIST_ID  AS "openInvoiceDetailId", --开票明细ID
+                INVOICE_NUMBER        AS "invoiceNumber", --发票号
+                INVOICE_TYPE          AS "typeId", --发票类型ID
+                DECODE(INVOICE_TYPE,1,'专用发票（纸）',
+                                    2,'普通发票(纸)',
+                                    3,'专用发票（电）',
+                                    4,'普通发票(电)','') AS "typeName", --发票类型名称
+                INVOICE_DATE    AS "invoiceDate", --发票日期
+                INVOICE_AMOUNT - TAX_AMOUNT AS "deductTaxAmount", --除税金额
+                TAX_AMOUNT        AS "taxAmount", --税额
+                INVOICE_AMOUNT  AS "totalAmount" --价税合计
           FROM  AHZH_USER.FD_OUTPUT_INVOICE_LIST T
     </select>
 

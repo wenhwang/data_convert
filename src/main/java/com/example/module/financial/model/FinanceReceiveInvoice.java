@@ -159,6 +159,9 @@ public class FinanceReceiveInvoice {
      */
     @ExcelProperty("已收票金额")
     private double alreadyReceiveAmount;
+
+    @ExcelProperty("发票总额")
+    private double totalInvoiceAmount;
     /**
      * 累计收票金额
      *
@@ -287,8 +290,6 @@ public class FinanceReceiveInvoice {
     private String openWayName = StringUtils.EMPTY;
     @ExcelProperty("审批流程实例id")
     private String procInstId = StringUtils.EMPTY;
-    //商品明细
-    @ExcelIgnore private List<MapCommodity> commodityList = new ArrayList();
 
     @ExcelProperty("数据源")
     private String dataSource = "EPMS";
