@@ -24,6 +24,7 @@ import com.example.utils.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -42,6 +43,13 @@ public class FinancialExportService {
     public static final String SAVE_PATH = new File("files/export/financial/").getPath();
     public static final String FILE_EXT = ".xlsx";
 
+    @Value("${fexport.begin.time}")
+    private String exportBeginTime;
+
+    @Value("${fexport.end.time}")
+    private String exportEndTime;
+
+
     @Resource
     private FinancialMapper financialMapper;
 
@@ -53,9 +61,8 @@ public class FinancialExportService {
 
     //报销单
     public List<FinanceReimbursement> expenseHandler(String funcName) {
-
         //查询报销单
-        List<FinanceReimbursement> reimbursements = financialMapper.selectExpenseSheet();
+        List<FinanceReimbursement> reimbursements = financialMapper.selectExpenseSheet(exportBeginTime, exportEndTime);
         log.info("已查询EPMS报销单数据:{} 条记录", reimbursements.size());
         //查询报销单结算方式
         log.info("查询报销单结算方式");
@@ -78,7 +85,7 @@ public class FinancialExportService {
     public List<MapCostList> expenseDetialHandler(String funcName) {
         //cost_type
         List<Map> costTypes = helperService.query("label", "费用类别", new String[]{"dictId", "dictName"}, "sys_dict");
-        List<MapCostList> costLists = financialMapper.selectAllExpenseCostList();
+        List<MapCostList> costLists = financialMapper.selectAllExpenseCostList(exportBeginTime, exportEndTime);
         log.info("已查询EPMS报销单明细数据:{} 条记录", costLists.size());
         costLists.forEach(m -> {
             m.setCostTypeId(HelperService.replaceRefId(m.getCostTypeName(), costTypes));
@@ -91,7 +98,7 @@ public class FinancialExportService {
 
     //还款单
     public List<FinanceRepayment> repaymentHandler(String funcName) {
-        List<FinanceRepayment> financeRepayments = financialMapper.selectRepayment();
+        List<FinanceRepayment> financeRepayments = financialMapper.selectRepayment(exportBeginTime, exportEndTime);
         log.info("已查询EPMS还款单数据:{} 条记录", financeRepayments.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -101,7 +108,7 @@ public class FinancialExportService {
 
     //备用金（借款）
     public List<FinanceReserveFund> reserveFundHandler(String funcName) {
-        List<FinanceReserveFund> reserveFunds = financialMapper.selectReserveFund();
+        List<FinanceReserveFund> reserveFunds = financialMapper.selectReserveFund(exportBeginTime, exportEndTime);
         log.info("已查询备用金还款数据:{} 条记录", reserveFunds.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -115,7 +122,7 @@ public class FinancialExportService {
         List<Map> accountMoneyTypes = helperService.query("label", "帐户资金类型", new String[]{"dictId", "dictName"}, "sys_dict");
         //bank_account_type
         List<Map> bankAccountTypes = helperService.query("label", "银行帐户类型", new String[]{"dictId", "dictName"}, "sys_dict");
-        List<FinanceCapitalAccount> capitalAccounts = financialMapper.selectCapitalAccount();
+        List<FinanceCapitalAccount> capitalAccounts = financialMapper.selectCapitalAccount(exportBeginTime,exportEndTime);
         capitalAccounts.stream().forEach(f -> {
             //账户资金类型
             String bankAccountType = f.getBankAccountType();
@@ -137,7 +144,7 @@ public class FinancialExportService {
 
     //外经证
     public List<FinanceBusinessLicense> businessLicenseHandler(String funcName) {
-        List<FinanceBusinessLicense> businessLicenses = financialMapper.selectBusinessLicense();
+        List<FinanceBusinessLicense> businessLicenses = financialMapper.selectBusinessLicense(exportBeginTime,exportEndTime);
         log.info("已查询外经证数据:{} 条记录", businessLicenses.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -165,7 +172,7 @@ public class FinancialExportService {
 
     //收票
     public List<FinanceReceiveInvoice> receiveInvoiceHandler(String funcName) {
-        List<FinanceReceiveInvoice> receiveInvoices = financialMapper.selectReceiveInvoice();
+        List<FinanceReceiveInvoice> receiveInvoices = financialMapper.selectReceiveInvoice(exportBeginTime,exportEndTime);
         log.info("已查询收票数据:{} 条记录", receiveInvoices.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -175,7 +182,7 @@ public class FinancialExportService {
 
     //收票明细
     public List<MapInvoice> receiveInvoiceDetailHandler(String funcName) {
-        List<MapInvoice> invoiceLists = financialMapper.selectALLReceiveInvoiceDetail();
+        List<MapInvoice> invoiceLists = financialMapper.selectALLReceiveInvoiceDetail(exportBeginTime,exportEndTime);
         log.info("已查询收票明细数据:{} 条记录", invoiceLists.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -194,7 +201,7 @@ public class FinancialExportService {
 
     //开票
     public List<FinanceOpenInvoice> openInvoiceHandler(String funcName) {
-        List<FinanceOpenInvoice> openInvoices = financialMapper.selectOpenInvoice();
+        List<FinanceOpenInvoice> openInvoices = financialMapper.selectOpenInvoice(exportBeginTime, exportEndTime);
         log.info("已查询开票数据:{} 条记录", openInvoices.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -204,7 +211,7 @@ public class FinancialExportService {
 
     //开票明细
     public List<MapOpenInvoice> openInvoiceDetailHandler(String funcName) {
-        List<MapOpenInvoice> openInvoiceDetails = financialMapper.selectAllOpenInvoiceDetail();
+        List<MapOpenInvoice> openInvoiceDetails = financialMapper.selectAllOpenInvoiceDetail(exportBeginTime, exportEndTime);
         log.info("已查询开票明细数据:{} 条记录", openInvoiceDetails.size());
         String filePath = SAVE_PATH+"/"+funcName+FILE_EXT;
         log.info("save to File:{}",filePath);
@@ -237,7 +244,7 @@ public class FinancialExportService {
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
 
-        List<FinancePayment> payment_1 = financialMapper.selectPayingVoucher();
+        List<FinancePayment> payment_1 = financialMapper.selectPayingVoucher(exportBeginTime, exportEndTime);
 
         log.info("已查询付款（确认付款）数据:{} 条记录", payment_1.size());
         if (Objects.nonNull(payment_1)) {
@@ -252,7 +259,7 @@ public class FinancialExportService {
         ExcelUtils.saveToFile(SAVE_PATH+"/"+funcName+FILE_EXT,funcName,FinancePayment.class,payment_1);
 
 
-        List<FinancePayment> payment_2 = financialMapper.selectProjectMarginApply();
+        List<FinancePayment> payment_2 = financialMapper.selectProjectMarginApply(exportBeginTime, exportEndTime);
         log.info("已查询保证金付款数据:{} 条记录", payment_2.size());
         if (Objects.nonNull(payment_2)) {
             payment_2.parallelStream().forEach(p -> {
@@ -266,7 +273,7 @@ public class FinancialExportService {
         log.info("save to File:{}",filePath);
         ExcelUtils.saveToFile(SAVE_PATH+"/"+funcName+FILE_EXT,funcName,FinancePayment.class,payment_2);
 
-        List<FinancePayment> payment_3 = financialMapper.selectProjectPaymentApply();
+        List<FinancePayment> payment_3 = financialMapper.selectProjectPaymentApply(exportBeginTime, exportEndTime);
         log.info("已查询项目付款数据:{} 条记录", payment_3.size());
         if (Objects.nonNull(payment_3)) {
             payment_3.parallelStream().forEach(p -> {
@@ -279,7 +286,7 @@ public class FinancialExportService {
         log.info("save to File:{}",filePath);
         ExcelUtils.saveToFile(SAVE_PATH+"/"+funcName+FILE_EXT,funcName,FinancePayment.class,payment_3);
 
-        List<FinancePayment> payment_4 = financialMapper.selectPaymentApplyHead();
+        List<FinancePayment> payment_4 = financialMapper.selectPaymentApplyHead(exportBeginTime, exportEndTime);
         log.info("已查询采购付款申请数据:{} 条记录", payment_4.size());
         if (Objects.nonNull(payment_4)) {
             payment_4.parallelStream().forEach(p -> {
@@ -305,7 +312,7 @@ public class FinancialExportService {
         Query query = Query.query(criteria);
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
-        List<FinanceReceivables> receivablesList = financialMapper.selectReceivablese();
+        List<FinanceReceivables> receivablesList = financialMapper.selectReceivablese(exportBeginTime, exportEndTime);
         log.info("已查询收款数据:{} 条记录", receivablesList.size());
         if (!Objects.isNull(receivablesList)) {
             receivablesList.parallelStream().forEach(p -> {
@@ -321,7 +328,7 @@ public class FinancialExportService {
 
     //往来管理（调整单）
     public List<FinanceAdjustment> adjustmentHandler(String funcName) {
-        List<FinanceAdjustment> adjustments = financialMapper.selectAdjustment();
+        List<FinanceAdjustment> adjustments = financialMapper.selectAdjustment(exportBeginTime, exportEndTime);
         List<Map> changeObjectTypes = helperService.query("label", "调整对象", new String[]{"dictId", "dictName"}, "sys_dict");
         log.info("已查询往来管理（调整单）数据:{} 条记录", adjustments.size());
         if (!Objects.isNull(adjustments)) {
@@ -344,7 +351,7 @@ public class FinancialExportService {
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
 
-        List<FinanceDrawMoney> drawMonies = financialMapper.selectDrawMoney();
+        List<FinanceDrawMoney> drawMonies = financialMapper.selectDrawMoney(exportBeginTime, exportEndTime);
         log.info("已查询划款（扣款）数据:{} 条记录", drawMonies.size());
         if (!Objects.isNull(drawMonies)) {
             drawMonies.parallelStream().forEach(p -> {

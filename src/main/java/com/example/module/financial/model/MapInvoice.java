@@ -66,7 +66,6 @@ public class MapInvoice {
     @ExcelIgnore
     private List<MapCommodity> commodityList = new ArrayList();
 
-
     @ExcelProperty("税率") private double taxRate;
 
 }

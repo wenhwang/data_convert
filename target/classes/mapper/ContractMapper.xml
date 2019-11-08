@@ -36,17 +36,25 @@
                 FROM AHZH_USER.CPCDICT T2
                 WHERE T2.DICTCODE LIKE 'Project_Contract_Type%'
                   AND T.PROJECT_CONTRACT_TYPE = T2.DICTVALUE) as "contractType",          --  合同类型
-               ''                                             as "contractCategory",      --  合同类别
-               ''                                             as "contractCategoryId",    --  合同类别ID
+               (SELECT T2.PROJECT_TYPE_NAME
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "contractCategory",      --  合同类别
+               (SELECT T2.PROJECT_TYPE
+                FROM AHZH_USER.VIEW_BASE_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)           as "contractCategoryId",    --  合同类别ID
                T.INVOICE_TYPE                                 as "invoiceTypeId",         --  发票类型ID
-               (SELECT T2.DICTNAME
+               (SELECT SUBSTR(T2.DICTNAME, 0,7)
                 FROM AHZH_USER.CPCDICT T2
                 WHERE T2.DICTCODE LIKE 'Invoice_Type%'
                   AND T.INVOICE_TYPE = T2.DICTVALUE
                   AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceType",           --  发票类型
                T.CONTRACT_NUMBER                              as "contractNumber",        --  合同份数
                T.CONTRACT_AMOUNT                              as "contractAmount",        --  合同金额
-               T.TAX_RATE                                     as "invoiceTaxRate",        --  发票税率
+               (SELECT SUBSTR(T2.DICTNAME, 8)
+                FROM AHZH_USER.CPCDICT T2
+                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE
+                  AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceTaxRate",        --  发票税率
                ''                                             as "invoiceTaxRateId",      --  发票税率ID
                T.SIGNUP_ADDRESS                               as "signedAt",              --  签订地点
                T.PROJECT_MANAGER_NAME                         as "builder",               --  建造师
@@ -216,19 +224,15 @@
                 FROM AHZH_USER.VIEW_PROJECT_CONTRACT_DETAIL
                 WHERE PROJECT_ID = T.PROJECT_ID)              as "parentContractCode",     --主合同编号
                T.PROJECT_CONTRACT_NAME                        as "contractName",           --  合同名称
-               T.PROJECT_CONTRACT_TYPE                        as "contractTypeId",         --  合同类型ID
-               (SELECT T2.DICTNAME
+               T.INVOICE_TYPE                                 as "contractTypeId",         --  合同类型ID
+               (SELECT SUBSTR(T2.DICTNAME, INSTR(T2.DICTNAME, '-', 1, 1) + 1)
                 FROM AHZH_USER.CPCDICT T2
-                WHERE T2.DICTCODE LIKE 'Project_Contract_Type%'
-                  AND T.PROJECT_CONTRACT_TYPE = T2.DICTVALUE) as "contractType",           --  合同类型
+                WHERE T2.DICTCODE LIKE 'Sub_Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE)          as "contractType",           --  合同类型
                ''                                             as "contractCategory",       --  合同类别
                ''                                             as "contractCategoryId",     --  合同类别ID
                T.INVOICE_TYPE                                 as "invoiceTypeId",          --  发票类型ID
-               (SELECT T2.DICTNAME
-                FROM AHZH_USER.CPCDICT T2
-                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
-                  AND T.INVOICE_TYPE = T2.DICTVALUE
-                  AND T2.IDPATH LIKE '%\-11696\%')            as "invoiceType",            --  发票类型
+               ''                                             as "invoiceType",            --  发票类型
                T.CONTRACT_NUMBER                              as "contractNumber",         --  合同份数
                T.CONTRACT_AMOUNT                              as "contractAmount",         --  合同金额
                T.TAX_RATE                                     as "invoiceTaxRate",         --  发票税率
@@ -237,9 +241,9 @@
                T.PROJECT_MANAGER_NAME                         as "builder",                --  建造师
                ''                                             as "builderId",              --  建造师ID
                T.SIGNUP_DATE                                  as "signedDate",             --  签订日期
-               T.FIRST_PARTY_NAME                             as "signedUnit",             --  签订单位
-               T.FIRST_PARTY_LINKMAN                          as "contacts",               --  联系人
-               T.FIRST_PARTY_PHONENO                          as "contactWay",             --  联系方式
+               T.SECOND_PARTY_NAME                             AS "signedUnit",             --  签订单位
+               T.SECOND_PARTY_LINKMAN                          AS "contacts",               --  联系人
+               T.SECOND_PARTY_PHONENO                          AS "contactWay",             --  联系方式
                T.SECOND_PARTY_BANK                            as "bank",                   -- 开户行
                T.SECOND_PARTY_ACCOUNT                         as "bankAccount",            --  账号
                T.SECOND_PARTY_USERNAME                        as "accountName",            -- 开户名称
@@ -304,6 +308,8 @@
                T.PUR_CONTRACT_HEAD_ID                                          as "contractId", --  合同ID
                T.CONTRACT_NO                                                   as "contractCode", --  合同编号
                ''                                                              AS "contractName", --  合同名称
+               T.CONTRACT_BEGIN_DATE                                           as "startTime", --  生效日期
+               T.CONTRACT_END_DATE                                             as "endTime", --  到期日期
                (SELECT T2.PARTNER_ID
                 FROM AHZH_USER.VIEW_BASE_PROJECT T2
                 WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "partnerId", --  合伙人ID
@@ -475,11 +481,12 @@
                T.TAX_RATE                           as "invoiceTaxRate",        --  发票税率
                ''                                   as "invoiceTaxRateId",      --  发票税率ID
                T.INVOICE_TYPE                       as "invoiceTypeId",         --  发票类型ID
+               ''                                   as "invoiceType",           --  发票类型
+               T.INVOICE_TYPE                       as "contractTypeId", --  合同类型ID
                (SELECT T2.DICTNAME
                 FROM AHZH_USER.CPCDICT T2
-                WHERE T2.DICTCODE LIKE 'Invoice_Type%'
-                  AND T.INVOICE_TYPE = T2.DICTVALUE
-                  AND T2.IDPATH LIKE '%\-11696\%')  as "invoiceType",           --  发票类型
+                WHERE T2.DICTCODE LIKE 'Sub_Invoice_Type%'
+                  AND T.INVOICE_TYPE = T2.DICTVALUE)  as "contractType", --  合同类型
                T.CONTRACT_NUMBER                    AS "contractNumber",        --  合同份数
                T.CONTRACT_AMOUNT                    AS "contractAmount",        --  合同金额
                T.CONTRACT_AMOUNT                    as "actualContractAmount",  --  合同真实金额
@@ -492,12 +499,12 @@
                T.SECOND_PARTY_USERNAME              AS "accountName",           --  开户名称
                T.SECOND_PARTY_BANK                  AS "bank",                  --  开户行
                T.SECOND_PARTY_ACCOUNT               AS "bankAccount",           -- 账号
-               ''                                   AS "settlementAmount",      --	已结算金额
-               ''                                   AS "unSettlementAmount",    --	未结算金额
-               ''                                   AS "receiveInvoiceAmount",  --	已收票金额
-               ''                                   AS "unReceiveInvoiceAmount",--	未收票金额
-               ''                                   AS "payAmount",             --	已付款金额
-               ''                                   AS "unPayAmount",           --	未付款金额
+               ''                                   AS "settlementAmount",      --  已结算金额
+               ''                                   AS "unSettlementAmount",    --  未结算金额
+               ''                                   AS "receiveInvoiceAmount",  --  已收票金额
+               ''                                   AS "unReceiveInvoiceAmount",--  未收票金额
+               ''                                   AS "payAmount",             --  已付款金额
+               ''                                   AS "unPayAmount",           --  未付款金额
                DECODE(T.STAT,
                       1, '0',-- 制单
                       3, '0',-- 启动

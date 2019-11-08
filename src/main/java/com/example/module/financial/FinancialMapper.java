@@ -20,62 +20,62 @@ import java.util.List;
 
 public interface FinancialMapper {
     //报销单
-    List<FinanceReimbursement> selectExpenseSheet();
+    List<FinanceReimbursement> selectExpenseSheet(String exportBeginTime, String exportEndTime);
 
     //报销单明细
     List<MapCostList> selectExpenseCostList(@Param("bxId") String bxId);
 
     //还款单
-    List<FinanceRepayment> selectRepayment();
+    List<FinanceRepayment> selectRepayment(String exportBeginTime, String exportEndTime);
 
     //备用金
-    List<FinanceReserveFund> selectReserveFund();
+    List<FinanceReserveFund> selectReserveFund(String exportBeginTime, String exportEndTime);
 
     //资金账号
-    List<FinanceCapitalAccount> selectCapitalAccount();
+    List<FinanceCapitalAccount> selectCapitalAccount(String exportBeginTime, String exportEndTime);
 
     //外经证
-    List<FinanceBusinessLicense> selectBusinessLicense();
+    List<FinanceBusinessLicense> selectBusinessLicense(String exportBeginTime, String exportEndTime);
 
     //收票
-    List<FinanceReceiveInvoice> selectReceiveInvoice();
+    List<FinanceReceiveInvoice> selectReceiveInvoice(String exportBeginTime, String exportEndTime);
 
     //收票明细
     List<MapInvoice> selectReceiveInvoiceDetail(String receiveInvoiceId);
 
     //收票明细
-    List<MapInvoice> selectALLReceiveInvoiceDetail();
+    List<MapInvoice> selectALLReceiveInvoiceDetail(String exportBeginTime, String exportEndTime);
 
     //开票
-    List<FinanceOpenInvoice> selectOpenInvoice();
+    List<FinanceOpenInvoice> selectOpenInvoice(String exportBeginTime, String exportEndTime);
 
     //开票明细
     List<MapOpenInvoice> selectOpenInvoiceDetail(String openInvoiceId);
 
     //开票明细
-    List<MapOpenInvoice> selectAllOpenInvoiceDetail();
+    List<MapOpenInvoice> selectAllOpenInvoiceDetail(String exportBeginTime, String exportEndTime);
 
     //收款
-    List<FinanceReceivables> selectReceivablese();
+    List<FinanceReceivables> selectReceivablese(String exportBeginTime, String exportEndTime);
 
     //往来管理(调整单)
-    List<FinanceAdjustment> selectAdjustment();
+    List<FinanceAdjustment> selectAdjustment(String exportBeginTime, String exportEndTime);
 
     //划款（扣款）
-    List<FinanceDrawMoney> selectDrawMoney();
+    List<FinanceDrawMoney> selectDrawMoney(String exportBeginTime, String exportEndTime);
 
     //付款（确认付款）
-    List<FinancePayment> selectPayingVoucher();
+    List<FinancePayment> selectPayingVoucher(String exportBeginTime, String exportEndTime);
 
     //保证金付款
-    List<FinancePayment> selectProjectMarginApply();
+    List<FinancePayment> selectProjectMarginApply(String exportBeginTime, String exportEndTime);
 
     //项目付款
-    List<FinancePayment> selectProjectPaymentApply();
+    List<FinancePayment> selectProjectPaymentApply(String exportBeginTime, String exportEndTime);
 
     //采购付款申请
-    List<FinancePayment> selectPaymentApplyHead();
+    List<FinancePayment> selectPaymentApplyHead(String exportBeginTime, String exportEndTime);
 
     //所有报销单明细
-    List<MapCostList> selectAllExpenseCostList();
+    List<MapCostList> selectAllExpenseCostList(String exportBeginTime, String exportEndTime);
 }

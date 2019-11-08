@@ -16,6 +16,7 @@ import com.example.module.financial.model.MapCostList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -31,6 +32,13 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class FinancialService {
+
+    @Value("${fexport.begin.time}")
+    private String exportBeginTime;
+
+    @Value("${fexport.end.time}")
+    private String exportEndTime;
+
 
     @Resource
     private FinancialMapper financialMapper;
@@ -67,7 +75,7 @@ public class FinancialService {
     @Transactional
     public List<FinanceReimbursement> expenseHandler() {
         //查询报销单
-        List<FinanceReimbursement> reimbursements = financialMapper.selectExpenseSheet();
+        List<FinanceReimbursement> reimbursements = financialMapper.selectExpenseSheet(exportBeginTime,exportEndTime);
         log.info("已查询EPMS报销单数据:{} 条记录", reimbursements.size());
         //查询报销单结算方式
         log.info("查询报销单结算方式");
@@ -100,7 +108,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceRepayment> repaymentHandler() {
-        List<FinanceRepayment> financeRepayments = financialMapper.selectRepayment();
+        List<FinanceRepayment> financeRepayments = financialMapper.selectRepayment(exportBeginTime, exportEndTime);
         log.info("已查询EPMS还款单数据:{} 条记录", financeRepayments.size());
         if (!Objects.isNull(financeRepayments)) {
             mongoTemplate.insert(financeRepayments, TABEL_FINANCE_REPAYMENT);
@@ -111,7 +119,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceReserveFund> reserveFundHandler() {
-        List<FinanceReserveFund> reserveFunds = financialMapper.selectReserveFund();
+        List<FinanceReserveFund> reserveFunds = financialMapper.selectReserveFund(exportBeginTime, exportEndTime);
         log.info("已查询备用金还款数据:{} 条记录", reserveFunds.size());
         if (!Objects.isNull(reserveFunds)) {
             mongoTemplate.insert(reserveFunds, TABEL_FINANCE_RESERVE_FUND);
@@ -126,7 +134,7 @@ public class FinancialService {
         List<Map> accountMoneyTypes = helperService.query("label", "帐户资金类型", new String[]{"dictId", "dictName"}, "sys_dict");
 //bank_account_type
         List<Map> bankAccountTypes = helperService.query("label", "银行帐户类型", new String[]{"dictId", "dictName"}, "sys_dict");
-        List<FinanceCapitalAccount> capitalAccounts = financialMapper.selectCapitalAccount();
+        List<FinanceCapitalAccount> capitalAccounts = financialMapper.selectCapitalAccount(exportBeginTime, exportEndTime);
 
         capitalAccounts.stream().forEach(f -> {
 
@@ -154,7 +162,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceBusinessLicense> businessLicenseHandler() {
-        List<FinanceBusinessLicense> businessLicenses = financialMapper.selectBusinessLicense();
+        List<FinanceBusinessLicense> businessLicenses = financialMapper.selectBusinessLicense(exportBeginTime, exportEndTime);
         log.info("已查询外经证数据:{} 条记录", businessLicenses.size());
         if (!Objects.isNull(businessLicenses)) {
             mongoTemplate.insert(businessLicenses, TABEL_FINANCE_BUSINESS_LICENSE);
@@ -165,7 +173,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceReceiveInvoice> receiveInvoiceHandler() {
-        List<FinanceReceiveInvoice> receiveInvoices = financialMapper.selectReceiveInvoice();
+        List<FinanceReceiveInvoice> receiveInvoices = financialMapper.selectReceiveInvoice(exportBeginTime, exportEndTime);
         receiveInvoices.parallelStream().forEach(f -> {
             //收票明细
             f.setInvoiceList(financialMapper.selectReceiveInvoiceDetail(f.getReceiveInvoiceId()));
@@ -182,7 +190,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceOpenInvoice> openInvoiceHandler() {
-        List<FinanceOpenInvoice> openInvoices = financialMapper.selectOpenInvoice();
+        List<FinanceOpenInvoice> openInvoices = financialMapper.selectOpenInvoice(exportBeginTime,exportEndTime);
         log.info("已查询开票数据:{} 条记录", openInvoices.size());
         openInvoices.parallelStream().forEach(f -> {
             //开票明细
@@ -207,7 +215,7 @@ public class FinancialService {
         Query query = Query.query(criteria);
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
-        List<FinanceReceivables> receivablesList = financialMapper.selectReceivablese();
+        List<FinanceReceivables> receivablesList = financialMapper.selectReceivablese(exportBeginTime,exportEndTime);
         log.info("已查询收款数据:{} 条记录", receivablesList.size());
         if (!Objects.isNull(receivablesList)) {
             receivablesList.parallelStream().forEach(p -> {
@@ -221,7 +229,7 @@ public class FinancialService {
 
     @Transactional
     public List<FinanceAdjustment> adjustmentHandler() {
-        List<FinanceAdjustment> adjustments = financialMapper.selectAdjustment();
+        List<FinanceAdjustment> adjustments = financialMapper.selectAdjustment(exportBeginTime,exportEndTime);
         List<Map> changeObjectTypes = helperService.query("label", "调整对象", new String[]{"dictId", "dictName"}, "sys_dict");
         log.info("已查询往来管理（调整单）数据:{} 条记录", adjustments.size());
         if (!Objects.isNull(adjustments)) {
@@ -244,7 +252,7 @@ public class FinancialService {
         query.fields().include("dictId").include("dictName").exclude("_id");
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
 
-        List<FinanceDrawMoney> drawMonies = financialMapper.selectDrawMoney();
+        List<FinanceDrawMoney> drawMonies = financialMapper.selectDrawMoney(exportBeginTime,exportEndTime);
         log.info("已查询划款（扣款）数据:{} 条记录", drawMonies.size());
         if (!Objects.isNull(drawMonies)) {
             drawMonies.parallelStream().forEach(p -> {
@@ -272,7 +280,7 @@ public class FinancialService {
         List<Map> typeMapList = mongoTemplate.find(query, Map.class, "sys_dict");
 
 
-        List<FinancePayment> payment_1 = financialMapper.selectPayingVoucher();
+        List<FinancePayment> payment_1 = financialMapper.selectPayingVoucher(exportBeginTime,exportEndTime);
 
         log.info("已查询付款（确认付款）数据:{} 条记录", payment_1.size());
         if (Objects.nonNull(payment_1)) {
@@ -285,7 +293,7 @@ public class FinancialService {
         }
 
 
-        List<FinancePayment> payment_2 = financialMapper.selectProjectMarginApply();
+        List<FinancePayment> payment_2 = financialMapper.selectProjectMarginApply(exportBeginTime,exportEndTime);
         log.info("已查询保证金付款数据:{} 条记录", payment_2.size());
         if (Objects.nonNull(payment_2)) {
             payment_2.parallelStream().forEach(p -> {
@@ -297,7 +305,7 @@ public class FinancialService {
         }
 
 
-        List<FinancePayment> payment_3 = financialMapper.selectProjectPaymentApply();
+        List<FinancePayment> payment_3 = financialMapper.selectProjectPaymentApply(exportBeginTime,exportEndTime);
         log.info("已查询项目付款数据:{} 条记录", payment_3.size());
         if (Objects.nonNull(payment_3)) {
             payment_3.parallelStream().forEach(p -> {
@@ -310,7 +318,7 @@ public class FinancialService {
         }
 
 
-        List<FinancePayment> payment_4 = financialMapper.selectPaymentApplyHead();
+        List<FinancePayment> payment_4 = financialMapper.selectPaymentApplyHead(exportBeginTime,exportEndTime);
         log.info("已查询采购付款申请数据:{} 条记录", payment_4.size());
         if (Objects.nonNull(payment_4)) {
             payment_4.parallelStream().forEach(p -> {
