@@ -224,5 +224,28 @@
         WHERE VENDOR_ID IN (SELECT VENDOR_ID
                             FROM AHZH_USER.FD_INPUT_INVOICE_HEAD HEAD
                             WHERE INVOICE_CLASS = 2)
+        UNION
+
+        SELECT  VENDOR_ID AS "customerId", --    客户id
+                VENDOR_CODE AS "customerCode", --    客户编码
+                VENDOR_NAME AS "customerName", --    客户名称
+                SHORT_NAME AS "customerAbbreviation", --    客户简称
+                CONTACT AS "contacts", --    主要联系人
+                TELE AS "phone", --   联系电话
+                '' AS "province", --    省份
+                '' AS "city", --    市
+                '' AS "county", --    区县
+                ADDRESS AS "address", --   详细地址
+                '' AS "accountName", --   账户名称
+                BANK AS "bankName", --    开户行
+                BANK AS "bankAccount", --   银行账号
+                '0' as "isSeas", --  是否公海客户
+                CREATED_BY AS "createBy", --    创建人
+                LAST_UPDATED_BY AS "updateBy", --   修改人
+                CREATION_DATE AS "createTime", --    创建时间
+                LAST_UPDATE_DATE AS "updateTime" --    修改时间
+          FROM AHZH_USER.BASE_VIEW_VENDOR_ORG T
+         WHERE T.DEPT_ID = 15993
+
     </select>
 </mapper>
