@@ -54,7 +54,7 @@ public class CreateByFieldHandler implements TypeHandler<String>{
                 .orElseGet(() -> {Map<String,String> defaultMap = new HashMap<>();defaultMap.put("username",finalRealName);return defaultMap;})
                 .get("username")+"";
         // String userName = helperService.findUserNameByRealName(realName);
-        log.info("createBy {} ---> {}",realName,userName);
+        log.debug("createBy {} ---> {}",realName,userName);
         return userName;
     }
 

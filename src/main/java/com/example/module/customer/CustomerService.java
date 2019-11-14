@@ -2,9 +2,12 @@ package com.example.module.customer;
 
 import com.alibaba.excel.EasyExcel;
 import com.example.module.HelperService;
+import com.example.module.customer.model.Cust;
 import com.example.module.customer.model.Customer;
 import com.example.module.customer.model.CustomerReadListener;
+import com.example.module.customer.model.MapCustAccount;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.core.MethodWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -13,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,8 +47,8 @@ public class CustomerService {
      * @return
      */
     @Transactional
-    public List<Map<String, String>> customerHandler(String custType) {
-        List<Map<String, String>> reuslts = null;
+    public List<Cust> customerHandler(String custType) {
+        List<Cust> reuslts = null;
         if (CUST_TYPE_1.equals(custType)) {
             reuslts = customerMapper.selectCustomerInfoCobberList();
         } else if (CUST_TYPE_2.equals(custType)) {
@@ -67,34 +71,39 @@ public class CustomerService {
         //customer_source
         List<Map> custSources = helperService.query("label", "客户来源", new String[]{"dictId", "dictName"}, "sys_dict");
         reuslts.forEach(s -> {
-            s.put("dataSource", "EPMS");
-            s.put("delFlag", "0");
+            s.setDataSource("EPMS");
+            s.setDelFlag("0");
             // s.put("customerId", UUID.randomUUID().toString().replace("-",""));
 
-            s.put("customerTypeId", customerTypeId);
+            s.setCustomerTypeId(customerTypeId);
 
+            //账户信息
+            List<MapCustAccount> custAccounts = new ArrayList<>();
+            MapCustAccount custAccount = new MapCustAccount(s.getAccountName(),s.getBankName(),s.getBankAccount());
+            custAccounts.add(custAccount);
+            s.setAccountList(custAccounts);
             //处理所属行业ID
-            String industry = s.get("industry");
+            String industry = s.getIndustry();
             if (StringUtils.isNotBlank(industry)) {
-                s.put("industryId", HelperService.replaceRefId(industry, custInds));
+                s.setIndustryId(HelperService.replaceRefId(industry, custInds));
             }
 
             //处理客户特征ID
-            String feature = s.get("feature");
+            String feature = s.getFeature();
             if (StringUtils.isNotBlank(feature)) {
-                s.put("featureId", HelperService.replaceRefId(feature, custFeatures));
+                s.setFeatureId(HelperService.replaceRefId(feature, custFeatures));
             }
 
             //处理客户等级ID
-            String level = s.get("level");
+            String level = s.getLevel();
             if (StringUtils.isNotBlank(level)) {
-                s.put("levelId", HelperService.replaceRefId(level, custLevels));
+                s.setLevelId(HelperService.replaceRefId(level, custLevels));
             }
 
             //处理客户来源ID
-            String source = s.get("source");
+            String source = s.getSource();
             if (StringUtils.isNotBlank(source)) {
-                s.put("sourceId", HelperService.replaceRefId(source, custSources));
+                s.setSourceId(HelperService.replaceRefId(source, custSources));
             }
 
         });

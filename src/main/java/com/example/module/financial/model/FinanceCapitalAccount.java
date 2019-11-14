@@ -41,11 +41,17 @@ public class FinanceCapitalAccount {
      */
     @ExcelProperty("银行网点名称") private String bankName;
     /**
+     * 记账货币ID
+     *
+     * @pdOid cfd339af-5e5b-4db4-bf81-610f543dcbb0
+     */
+    @ExcelProperty("记账货币ID") private String currencyTypeId;
+    /**
      * 记账货币
      *
      * @pdOid cfd339af-5e5b-4db4-bf81-610f543dcbb0
      */
-    @ExcelProperty("记账货币") private String currency;
+    @ExcelProperty("记账货币") private String currencyTypeName;
     /**
      * 记账货币编码
      *

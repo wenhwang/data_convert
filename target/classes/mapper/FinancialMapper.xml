@@ -91,8 +91,8 @@
               ''                 AS "repaymentWayId", --   还款方式id
               ''                 AS "repaymentWay", --   还款方式
               ''                 AS "repaymentName", --  收款名称
-              ''                 AS "repaymentBank", --  收款银行
-              RECEIVABLES_ACCOUNT_NAME AS "repaymentAccount", --   收款账号
+              RECEIVABLES_ACCOUNT_NAME                 AS "repaymentBank", --  收款银行
+              ''  AS "repaymentAccount", --   收款账号
               ''                       AS "applyAmount", --  申请还款金额
               AMOUNT_PAYMENT          AS "actualAmount", --   实际还款金额
               ''                                         AS "currencyTypeId", --   币种id
@@ -164,12 +164,28 @@
     <select id="selectCapitalAccount" resultMap="FinanceCapitalAccount">
             SELECT
                 FD_FUND_ACCOUNT_ID AS "accountId", --   资金账号ID
-                FUND_ACCOUNT_NAME AS "bankAccountName", --      银行账户名称
+                (CASE
+                WHEN FUND_ACCOUNT_CODE IN('ZHB01','ZHB02','ZHB03','ZHB04','ZHB05','ZHB06','ZHB07','ZHB08','ZHB09',
+                'ZHB10','ZHB11','ZHB12','ZHB13','ZHB14','ZHB15','ZHB16','ZHB17','ZHB18',
+                'ZHB19','ZHB20','ZHB21','ZHB22','ZHB23','ZHB24','ZHB25','ZHB26','ZHB27',
+                'ZHB28','ZHB29','ZHB30','ZHB31','ZHB32','ZHB33','ZHB34','ZHB35','ZHB36',
+                'ZHB37','ZHB38','ZHB39','ZHB40','ZHB41','ZHB42','ZHB43','ZHB44','ZHB47',
+                'ZHB48','ZHB49','ZHB50','ZHB51','ZHB52','ZHB53','ZHB54','ZHB55','ZHB56',
+                'ZHB57','ZHB58')   THEN '中徽机电科技股份有限公司'
+
+                WHEN FUND_ACCOUNT_CODE IN('ZHWX01','ZHZFB01')     THEN '公司用，孙思伟'
+                WHEN FUND_ACCOUNT_CODE = 'ZHC01'     THEN '中徽机电现金'
+                WHEN FUND_ACCOUNT_CODE = 'ZHF01'     THEN '中徽机电科技股份有限公司上海第三分公司'
+                WHEN FUND_ACCOUNT_CODE = 'ZHF02'     THEN '中徽机电科技股份有限公司四川分公司'
+                WHEN FUND_ACCOUNT_CODE = 'ZHF03'     THEN '中徽机电科技股份有限公司苏州分公司'
+                WHEN FUND_ACCOUNT_CODE = 'ZHB45'     THEN '胡冬梅'
+                WHEN FUND_ACCOUNT_CODE = 'ZHB46'     THEN '孙思伟'
+                ELSE FUND_ACCOUNT_NAME END)  AS "bankAccountName", --      银行账户名称
                 FUND_ACCOUNT_CODE    AS "sysNumber", --      银行账户编码
                 ACCOUNT    AS "bankAccount", --      银行账号
-                ''     AS "bankName", --       银行网点名称
-                ''     AS "currency", --       记账货币
-                ''     AS "currencyCode", --       记账货币编码
+                FUND_ACCOUNT_NAME     AS "bankName", --       银行网点名称
+                '人民币'     AS "currencyTypeName", --       记账货币
+                'RMB'     AS "currencyCode", --       记账货币编码
                 FUND_ACCOUNT_PROPERTY    AS "accountTypeId", --      账户资金类型id
                 DECODE(FUND_ACCOUNT_PROPERTY,11,'现金',
                                              12,'备用金',
@@ -551,54 +567,32 @@
                 javaType="string"></result>
     </resultMap>
     <select id="selectAdjustment" resultMap="FinanceAdjustment">
-        SELECT PROJECT_BALANCE_CHANGE_ID            AS "adjustmentId", -- 调整单ID
-               BALANCE_CHANGE_NO                    AS "sysNumber", --  调整单业务号
-               PROJECT_ID                           AS "projectId", --  项目ID
-               (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID), --  项目名称
-               ''      AS "typeId", --  业务类型ID
-               ''      AS "typeName", --  业务类型名称
-               ''      AS "companyName", --  单位名称
-               ACCT_BLNC_FIELD_NAME      AS "objectId", --  调整对象ID
-              DECODE(ACCT_BLNC_FIELD_NAME,
-                       'OUTPUT_INVOICE_AMOUNT','累计开票金额(开给业主方的发票金额)',
-                        'INPUT_INVOICE_AMOUNT','累计收票金额(收到合伙人的发票金额)',
-                        'PROJECT_INVEST_AMOUNT','项目投资金额(收到合伙人投资款)',
-                        'PROJECT_RECEIVE_AMOUNT','项目回款金额(收到业主方款项)',
-                        'PROJECT_PAYMENT_AMOUNT','项目支付金额(支付给合伙人)',
-                        'WITHHOLD_MANAGEMENT_AMOUNT','项目扣款金额(管理费)',
-                        'WITHHOLD_TAX_AMOUNT','项目扣款金额(税费)',
-                        'WITHHOLD_OTHER_AMOUNT','项目扣款金额(其他)',
-                        'PROJECT_FINE_AMOUNT','项目罚款金额',
-                        'OUTPUT_VAT_AMOUNT','销项票税额(开给业主方的发票的税额)',
-                        'INPUT_VAT_AMOUNT','进项票税额(收到合伙人的发票的税额)',
-                        'DIFF_AREA_VAT_AMOUNT','外经证税额',
-                        'LOAN_AMOUNT','公司借入',
-                        'TRANSFER_IN_AMOUNT','往来调拨收款',
-                        'TRANSFER_OUT_AMOUNT','往来调拨付款',
-                        'AGENT_PURCHASE_OUT_AMOUNT','代采购付款',
-                        'WITHHOLD_YEAR_AMOUNT','项目扣款金额(年费)',
-                        'IN_MARGIN_AMOUNT','收保证金',
-                        'OUT_MARGIN_AMOUNT','付保证金',
-                        'OTHER_IN_AMOUNT','其他回款',
-                        'OTHER_OUT_AMOUNT','其他付款',
-                        'BORROW_AMOUNT','公司借支',''
-               ) AS "objectName",--  调整对象
-               ''                     AS "overObject", --  调整前对象
-               ''                     AS "afterObject", --  调整后对象
-               APPLY_DATE               AS "applyDate", --  申请日期
-               ''                     AS "applyUser", --  申请人
-               ''                     AS "applyDepartmentId", --  申请部门ID
-               ''                     AS "applyDepartmentName", --  申请部门名称
-               CHANGE_AMOUNT          AS "amount", --  调整金额
-               ''                     AS "accountSubject", --  账套主体
-               ''                     AS "files", --  附件集合
-               REMARK                 AS "remarks", --  备注
-               '0'                    AS "delFlag", --  是否删除
-               CREATE_BY              AS "createBy", -- 创建人
-               LAST_UPDATED_BY        AS "updateBy", -- 修改人
-               CREATE_DATE             AS "createTime", --  创建时间
-               LAST_UPDATE_DATE        AS "updateTime" --  修改时间
-          FROM  AHZH_USER.EPM_PROJECT_BALANCE_CHANGE T
+        SELECT T.PROJECT_ACCT_BLNC_TRSF_ID           AS "adjustmentId", -- 调整单ID
+                T.BILL_NO                    AS "sysNumber", --  调整单业务号
+                T.IN_PROJECT_ID                           AS "projectId", --  项目ID
+                (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.IN_PROJECT_ID), --  项目名称
+                ''      AS "typeId", --  业务类型ID
+                ''      AS "typeName", --  业务类型名称
+                ''      AS "companyName", --  单位名称
+                T.IN_PROJECT_ID      AS "objectId", --  调整对象ID
+                '项目名称' AS "objectName",--  调整对象
+                (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.IN_PROJECT_ID)                     AS "overObject", --  调整前对象
+                (SELECT T2.PROJECT_NAME  FROM  AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.OUT_PROJECT_ID)                     AS "afterObject", --  调整后对象
+                T.APPLY_DATE           AS "applyDate", --  申请日期
+                T.APPLY_PEOPLE         AS "applyUser", --  申请人
+                ''                     AS "applyDepartmentId", --  申请部门ID
+                ''                     AS "applyDepartmentName", --  申请部门名称
+                T.APPLY_AMOUNT          AS "amount", --  调整金额
+                ''                     AS "accountSubject", --  账套主体
+                ''                     AS "files", --  附件集合
+                REMARK                 AS "remarks", --  备注
+                '0'                    AS "delFlag", --  是否删除
+                DECODE(T.STAT,1,'0',3,'1','5','3','99','5','')    AS "status",-- 单据状态
+                T.CREATE_BY              AS "createBy", -- 创建人
+                T.LAST_UPDATE_BY        AS "updateBy", -- 修改人
+                T.CREATE_DATE             AS "createTime", --  创建时间
+                T.LAST_UPDATE_DATE        AS "updateTime" --  修改时间
+        FROM  AHZH_USER.EPM_PROJECT_ACCT_BLNC_TRSF T
         <if test="exportBeginTime != null and exportBeginTime !='' and exportEndTime != null and exportEndTime !=''" >
             WHERE  T.CREATE_DATE  BETWEEN  TO_DATE(#{exportBeginTime},'yyyy-mm-dd hh24:mi:ss') AND TO_DATE(#{exportEndTime},'yyyy-mm-dd hh24:mi:ss')
         </if>

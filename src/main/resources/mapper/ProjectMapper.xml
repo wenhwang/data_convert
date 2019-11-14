@@ -80,7 +80,7 @@
                ''                                   AS "provinceCode",      --  省份代码
                ''                                   AS "cityCode",          --  市代码
                NVL(T.AREA_ID, '')                   AS "countyCode",        --  区县代码
-               NVL(T.IS_NOT_BID, '')                AS "isBid",             --  是否公开招标
+               DECODE(T.IS_NOT_BID, 1,'0',2,'1',T.IS_NOT_BID)                AS "isBid",             --  是否公开招标
                NVL((SELECT SQUARE FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
                    '')                              AS "projectArea",--  项目面积
                NVL((SELECT BRAND FROM AHZH_USER.EPM_PROJECT T2 WHERE T2.PROJECT_ID = T.PROJECT_ID),
@@ -142,7 +142,7 @@
     </select>
 
     <select id="selectTenderInfoHandler" resultMap="PROJECT_BID">
-        SELECT T.PROJECT_ID                                       AS "projectId",         -- 项目ID
+        SELECT T2.PROJECT_ID                                       AS "projectId",         -- 项目ID
                DECODE(T2.PROJECT_STATUS,
                       '已报备', '14',
                       '报备中', '14',
@@ -163,7 +163,7 @@
                       '项目终止', '8',
                       '已作废', '8',
                       '完工', '13',
-                      '其他', '0', '0')                             AS "status",            --招投标状态
+                      '其他', '0', '0')                            AS "status",            --招投标状态
                ''                                                 AS "step",              --招投标进度
                ''                                                 AS "isEnroll",          --是否报名成功
                T.SIGNUP_TIME                                      AS "realityEnrollTime", ----实际报名时间
@@ -171,15 +171,15 @@
                ''                                                 AS "annualFee",         --年费金额
                ''                                                 AS "enrollCost",        --报名费用
                ''                                                 AS "enrollUserId",      --实际报名人ID
-               T.SIGNUP_PEOPLE                                    AS "enrollUserName",    --实际报名人
-               T.CREATE_BY                                        AS "createBy",          --  创建人
-               T.CREATE_DATE                                      AS "createTime",        --  创建时间
-               T.LAST_UPDATED_BY                                  AS "updateBy",          --  修改人
-               T.LAST_UPDATED_DATE                                AS "updateTime",        --  修改时间
+               NVL(T.SIGNUP_PEOPLE,T2.CREATE_BY)                  AS "enrollUserName",    --实际报名人
+               T2.CREATE_BY                                       AS "createBy",          --  创建人
+               T2.CREATE_DATE                                     AS "createTime",        --  创建时间
+               T2.MODIFY_BY                                       AS "updateBy",          --  修改人
+               T2.MODIFY_DATE                                     AS "updateTime",        --  修改时间
                '0'                                                AS "delFlag"
         FROM AHZH_USER.EPM_PROJECT_SIGNUP T,
              AHZH_USER.EPM_PROJECT T2
-        WHERE T.PROJECT_ID = T2.PROJECT_ID
+        WHERE T.PROJECT_ID(+) = T2.PROJECT_ID
     </select>
 
     <select id="selectEnrollQualifications" resultType="com.example.module.project.model.MapDeposit">
@@ -228,6 +228,7 @@
                T.LAST_UPDATE_BY                     AS "updateBy",           --  修改人
                T.LAST_UPDATE_DATE                   as "updateTime"          --  修改时间
         FROM AHZH_USER.EPM_PROJECT_BID_HEAD T
+        WHERE T.PROJECT_ID = TO_NUMBER(#{projectId})
 
     </select>
 
@@ -377,9 +378,9 @@
 
     <select id="selectAgreementProjects" resultType="com.example.module.project.model.ProjectAgreement">
         SELECT T.PROJECT_ID             AS "projectId",
-               DECODE(T.PROJECT_STATUS, '已签约', '0', '施工中', '50', '完工', '80', '已竣工', '90', '已验收', '100', '其他', '50',
+               DECODE(T.PROJECT_STATUS, '已中标','0','已签约', '0', '施工中', '50', '完工', '80', '已竣工', '90', '已验收', '100', '其他', '50',
                       T.PROJECT_STATUS) AS "planSpeed",
-               DECODE(T.PROJECT_STATUS, '已签约', '0', '施工中', '1', '完工', '1', '已验收', '4', '已竣工', '2', '其他', '1',
+               DECODE(T.PROJECT_STATUS,  '已中标','0','已签约', '0', '施工中', '1', '完工', '1', '已验收', '4', '已竣工', '2', '其他', '1',
                       '1')              AS "status",
                '0'                      AS "delFlag",
                ''                       AS "remarks",
@@ -388,7 +389,7 @@
                T.MODIFY_BY              AS "updateBy",
                T.MODIFY_DATE            as "updateTime"  --  修改时间
         FROM AHZH_USER.EPM_PROJECT T
-        WHERE T.PROJECT_STATUS IN ('已签约', '施工中', '已竣工', '已验收', '项目终止', '已作废', '完工')
+        WHERE T.PROJECT_STATUS IN ('已中标','已签约', '施工中', '已竣工', '已验收', '项目终止', '已作废', '完工')
     </select>
 
     <select id="selectAgreementManageCompany" resultType="com.example.module.project.model.MapManageCompany">

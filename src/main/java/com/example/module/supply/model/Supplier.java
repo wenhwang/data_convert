@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 供应商
@@ -145,6 +147,8 @@ public class Supplier implements Serializable {
      * @pdOid 8f96ad38-ac2d-48b9-9a4a-f9f90d323f5d
      */
     private Date updateTime;
+
+    private List<MapAccount>  accountList = new ArrayList<>();
     private String delFlag = "0";
     private String dataSource = "EPMS";
 

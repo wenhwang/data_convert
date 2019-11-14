@@ -5,13 +5,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Result<T> implements Serializable {
+public class Result<T > implements Serializable {
 
     private int code;
+
+    private int count = 0;
 
     private String message;
 
@@ -21,6 +25,9 @@ public class Result<T> implements Serializable {
         this.code = resultCode.code();
         this.message = resultCode.message();
         this.data = data;
+        if(data instanceof Collection){
+            this.count = ((Collection)data).size();
+        }
     }
 
     public Result(ResultCode resultCode) {

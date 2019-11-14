@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.example.module.customer.CustomerMapper">
-    <resultMap id="resultMap" type="java.util.Map" autoMapping="true">
+    <resultMap id="custMap" type="com.example.module.customer.model.Cust" autoMapping="true">
         <result  column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler" javaType="string"></result>
     </resultMap>
 
-    <select id="selectCustomerInfoCobberList" resultMap="resultMap">
-
+    <select id="selectCustomerInfoCobberList" resultMap="custMap">
         SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
                T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
                T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
+               SUBSTR(T1.DEPT_NAME , INSTR(T1.DEPT_NAME , '-', 1, 1) + 1)                   AS "department",-- 所属分部
                T1.SHORT_NAME                                                                as "customerAbbreviation", --  客户简称
                -- T1.HOLDER_TYPE            as "customerTypeId", --  客户类型ID
                T1.CUSTOMER_KIND                                                             as "customerTypeId",       --  客户类型ID
@@ -62,7 +62,7 @@
         WHERE T1.CUSTOMER_KIND = 3
     </select>
 
-    <select id="selectCustomerInfoSubjectPersonList" resultMap="resultMap">
+    <select id="selectCustomerInfoSubjectPersonList" resultMap="custMap">
         SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
                T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
                T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
@@ -119,7 +119,7 @@
           AND NVL(T1.IS_BID, 0) != 2
     </select>
 
-    <select id="selectCustomerInfoTenderCompanyList"  resultMap="resultMap">
+    <select id="selectCustomerInfoTenderCompanyList"  resultMap="custMap">
         SELECT T1.CUSTOMER_ID                                                               as "customerId",           --  客户ID
                T1.CUSTOMER_CODE                                                             as "customerCode",         --  客户编码
                T1.CUSTOMER_NAME                                                             as "customerName",         --  客户名称
@@ -176,7 +176,7 @@
           AND NVL(T1.IS_BID, 0) = 2
     </select>
 
-    <select id="selectCustomerInfoLabourCompanyList" resultType="java.util.Map">
+    <select id="selectCustomerInfoLabourCompanyList" resultType="com.example.module.customer.model.Cust">
         SELECT LOWER(sys_guid())     AS "customerId",           --    客户id
                ''                    AS "customerCode",         --    客户编码
                SECOND_PARTY_NAME     AS "customerName",         --    客户名称
@@ -201,7 +201,7 @@
 
     </select>
 
-    <select id="selectAnotherCustomerInfoLabourCompanyList"  resultMap="resultMap">
+    <select id="selectAnotherCustomerInfoLabourCompanyList"  resultMap="custMap">
         SELECT VENDOR_ID        AS "customerId",           --    客户id
                VENDOR_CODE      AS "customerCode",         --    客户编码
                VENDOR_NAME      AS "customerName",         --    客户名称

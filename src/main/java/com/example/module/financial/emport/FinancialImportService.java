@@ -122,7 +122,7 @@ public class FinancialImportService {
 
                 String reimbursementId = data.getReimbursementId();
                 if(!entries.containsKey(reimbursementId)){
-                    log.warn("|__ {} no found detail data",data.getSysNumber() );
+                    log.debug("|__ {} no found detail data",data.getSysNumber() );
                    return;
                 }
                 data.setCostList(entries.get(reimbursementId));
@@ -285,12 +285,12 @@ public class FinancialImportService {
 
                 String businessLicenseId = data.getBusinessLicenseId();
                 if(!payTaxeGroups.containsKey(businessLicenseId)){
-                    log.warn("|__ payTaxes: {} no found detail data",data.getSysNumber() );
+                    log.debug("|__ payTaxes: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setPayTaxMap(payTaxeGroups.get(businessLicenseId));
 
                 if(!handoverGroups.containsKey(businessLicenseId)){
-                    log.warn("|__ handovers: {} no found detail data",data.getSysNumber() );
+                    log.debug("|__ handovers: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setHandoverMap(handoverGroups.get(businessLicenseId));
 
@@ -316,7 +316,6 @@ public class FinancialImportService {
     public List<FinanceReceiveInvoice> receiveInvoiceHandler() {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 收票 ");
-        log.info("|__ 1. 收票明细");
         List<MapInvoice> invoices = new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/6.1 收票 - 发票明细.xlsx", MapInvoice.class, new AnalysisEventListener<MapInvoice>() {
             @Override
@@ -326,9 +325,8 @@ public class FinancialImportService {
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
         });
+        log.info("|__ 1. 收票明细 :{}",invoices.size());
 
-
-        log.info("|__ 2. 商品明细");
         List<MapCommodity> commodities = new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/6.2 收票 - 商品明细.xlsx", MapCommodity.class, new AnalysisEventListener<MapCommodity>() {
             @Override
@@ -341,14 +339,15 @@ public class FinancialImportService {
         Map<String, List<MapCommodity>> prodsGroupMaps = commodities
                 .stream()
                 .collect(Collectors.groupingBy(MapCommodity::getReceiveInvoiceDetailId));
-        log.info("|__ import  Commodity {} record data and has {} group record",commodities.size(),prodsGroupMaps.size());
+        log.info("|__  2. 商品明细 :{} , group {}",commodities.size(),prodsGroupMaps.size());
 
 
         //收票明细商品
+        log.info("|__ Merger operation to 1 step");
         invoices.parallelStream().forEach(mapInvoice -> {
             String receiveInvoiceId = mapInvoice.getReceiveInvoiceId();
             if(!prodsGroupMaps.containsKey(receiveInvoiceId)){
-                log.warn("|__ invoice Number: {} no found detail data",mapInvoice.getInvoiceNumber());
+                log.debug("|__ invoice Number: {} no found detail data",mapInvoice.getInvoiceNumber());
                 return;
             }
             mapInvoice.setCommodityList(prodsGroupMaps.get(receiveInvoiceId));
@@ -361,7 +360,6 @@ public class FinancialImportService {
 
 
 
-        log.info("|__ 3. 收票信息");
         List<FinanceReceiveInvoice> receiveInvoices = new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/6 收票.xlsx", FinanceReceiveInvoice.class, new AnalysisEventListener<FinanceReceiveInvoice>() {
             @Override
@@ -369,7 +367,7 @@ public class FinancialImportService {
 
                 String receiveInvoiceId = data.getReceiveInvoiceId();
                 if(!invoiceGroupMaps.containsKey(receiveInvoiceId)){
-                    log.warn("|__ invoices: {} no found detail data",data.getSysNumber() );
+                    log.debug("|__ invoices: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setInvoiceList(invoiceGroupMaps.get(receiveInvoiceId));
 
@@ -380,8 +378,7 @@ public class FinancialImportService {
             public void doAfterAllAnalysed(AnalysisContext context) { }
 
         });
-
-        log.info("|__ import {} record data",receiveInvoices.size());
+        log.info("|__ 3. 收票信息: {} ",receiveInvoices.size());
 
         if (!Objects.isNull(receiveInvoices)) {
             mongoTemplate.insert(receiveInvoices, TABEL_FINANCE_RECEIVE_INVOICE);
@@ -396,7 +393,6 @@ public class FinancialImportService {
         log.info("|------------------------------------------------------------------------|");
         log.info("|__ begin import 开票 ");
 
-        log.info("|__ 1. 开票明细");
         List<MapOpenInvoice> openInvoiceDetails = new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/7.2 开票 - 发票明细.xlsx", MapOpenInvoice.class, new AnalysisEventListener<MapOpenInvoice>() {
             @Override
@@ -406,9 +402,8 @@ public class FinancialImportService {
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
         });
+        log.info("|__ 1. 开票明细:{}",openInvoiceDetails.size());
 
-
-        log.info("|__ 2. 商品明细");
         List<MapOpenCommodity> openCommodities = new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/7.1 开票 - 商品明细.xlsx", MapOpenCommodity.class, new AnalysisEventListener<MapOpenCommodity>() {
             @Override
@@ -421,13 +416,14 @@ public class FinancialImportService {
         Map<String, List<MapOpenCommodity>> prodsGroupMaps = openCommodities
                 .stream()
                 .collect(Collectors.groupingBy(MapOpenCommodity::getOpenInvoiceDetailId));
-        log.info("|__ import Open Commodity {} record data and has {} group record",openCommodities.size(),prodsGroupMaps.size());
+        log.info("|__  2. 商品明细 :{} , group {}",openCommodities.size(),prodsGroupMaps.size());
 
         //开票商品明细
+        log.info("|__ Merger operation to 1 step");
         openInvoiceDetails.parallelStream().forEach(mapOpenInvoice -> {
             String openInvoiceDetailId = mapOpenInvoice.getOpenInvoiceDetailId();
             if(!prodsGroupMaps.containsKey(openInvoiceDetailId)){
-                log.warn("|__ open invoice Number: {} no found detail data",mapOpenInvoice.getInvoiceNumber());
+                log.debug("|__ open invoice Number: {} no found detail data",mapOpenInvoice.getInvoiceNumber());
                 return;
             }
             mapOpenInvoice.setCommodityList(prodsGroupMaps.get(openInvoiceDetailId));
@@ -440,7 +436,7 @@ public class FinancialImportService {
         log.info("|__ import Open Invoice {} record data and has {} group record",openInvoiceDetails.size(),invoiceGroupMaps.size());
 
 
-        log.info("|__ 3. 开票信息");
+
         List<FinanceOpenInvoice> openInvoices =  new ArrayList<>();
         ExcelUtils.read(SAVE_PATH + "/7 开票.xlsx", FinanceOpenInvoice.class, new AnalysisEventListener<FinanceOpenInvoice>() {
             @Override
@@ -448,7 +444,7 @@ public class FinancialImportService {
 
                 String openInvoiceId = data.getOpenInvoiceId();
                 if(!invoiceGroupMaps.containsKey(openInvoiceId)){
-                    log.warn("|__ open invoices: {} no found detail data",data.getSysNumber() );
+                    log.debug("|__ open invoices: {} no found detail data",data.getSysNumber() );
                 }else
                     data.setInvoiceList(invoiceGroupMaps.get(openInvoiceId));
                 openInvoices.add(data);
@@ -457,8 +453,7 @@ public class FinancialImportService {
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) { }
         });
-
-        log.info("|__ import {} record data",openInvoices.size());
+        log.info("|__ 3. 开票信息:{}",openInvoices.size());
 
         if (!Objects.isNull(openInvoices)) {
             mongoTemplate.insert(openInvoices, TABEL_FINANCE_OPEN_INVOICE);

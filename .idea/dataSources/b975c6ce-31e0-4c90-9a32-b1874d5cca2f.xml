@@ -21,7 +21,7 @@
     </schema>
     <schema id="7" parent="1" name="CAT_USER">
       <ObjectId>95</ObjectId>
-      <IntrospectionTimestamp>2019-10-21.22:37:30</IntrospectionTimestamp>
+      <IntrospectionTimestamp>2019-11-13.22:15:54</IntrospectionTimestamp>
       <Current>1</Current>
     </schema>
     <schema id="8" parent="1" name="CTXSYS">

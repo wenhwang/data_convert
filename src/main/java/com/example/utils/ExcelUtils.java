@@ -20,7 +20,6 @@ import java.util.Objects;
 public class ExcelUtils {
 
     public static void saveToFile(String filePath, String sheetName, Class head, List<? extends Object> data) {
-
         // 头的策略
         WriteCellStyle headWriteCellStyle = new WriteCellStyle();
         WriteFont headWriteFont = new WriteFont();
@@ -36,6 +35,7 @@ public class ExcelUtils {
 
         EasyExcel.write(filePath, head).registerWriteHandler(horizontalCellStyleStrategy).sheet(sheetName).doWrite(data);
     }
+
 
     public static void saveToFile(OutputStream stream, String sheetName, Class head, List<? extends Object> data) {
         EasyExcel.write(stream, head).sheet(sheetName).doWrite(data);

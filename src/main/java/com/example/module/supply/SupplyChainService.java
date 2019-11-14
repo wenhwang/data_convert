@@ -1,5 +1,6 @@
 package com.example.module.supply;
 
+import com.example.module.supply.model.MapAccount;
 import com.example.module.supply.model.Product;
 import com.example.module.supply.model.ProductCategory;
 import com.example.module.supply.model.Supplier;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +34,14 @@ public class SupplyChainService {
     @Transactional
     public List<Supplier> suppliersHandler() {
         List<Supplier> supplierList = supplyChainMapper.selectSuppliers();
+        supplierList.parallelStream().forEach(supplier -> {
+
+            List<MapAccount> accountLists = new ArrayList<>();
+
+            accountLists.add(new MapAccount(supplier.getAccountName(),supplier.getBankName(),supplier.getBankAccount()));
+            supplier.setAccountList(accountLists);
+        });
+
         log.info("已查询供应商数据:{} 条记录", supplierList.size());
         if (!Objects.isNull(supplierList)) {
             mongoTemplate.insert(supplierList, TABEL_SUPPLY_SUPPLIER);

@@ -134,9 +134,18 @@ public class FinancialService {
         List<Map> accountMoneyTypes = helperService.query("label", "帐户资金类型", new String[]{"dictId", "dictName"}, "sys_dict");
 //bank_account_type
         List<Map> bankAccountTypes = helperService.query("label", "银行帐户类型", new String[]{"dictId", "dictName"}, "sys_dict");
+
+        List<Map> currencys = helperService.query("label", "记账货币", new String[]{"dictId", "dictName"}, "sys_dict");
         List<FinanceCapitalAccount> capitalAccounts = financialMapper.selectCapitalAccount(exportBeginTime, exportEndTime);
 
         capitalAccounts.stream().forEach(f -> {
+
+
+            //记账货币
+            String currency = f.getCurrencyTypeName();
+            if (StringUtils.isNotBlank(currency)) {
+                f.setCurrencyTypeId(HelperService.replaceRefId(currency, currencys));
+            }
 
             //账户资金类型
             String bankAccountType = f.getBankAccountType();

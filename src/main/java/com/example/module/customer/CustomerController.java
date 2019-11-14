@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Api(tags = "客户数据维护")
+@Api(tags = "客户数据-DB")
 @RequestMapping("/cust")
 public class CustomerController {
 

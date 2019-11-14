@@ -307,7 +307,9 @@
                 WHERE T2.PROJECT_ID = T.PROJECT_ID)                            as "projectCode",--  项目编码
                T.PUR_CONTRACT_HEAD_ID                                          as "contractId", --  合同ID
                T.CONTRACT_NO                                                   as "contractCode", --  合同编号
-               ''                                                              AS "contractName", --  合同名称
+               (SELECT T2.PROJECT_NAME
+                FROM AHZH_USER.EPM_PROJECT T2
+                WHERE T2.PROJECT_ID = T.PROJECT_ID)||'采购合同'||T.CONTRACT_NO AS "contractName", --  合同名称
                T.CONTRACT_BEGIN_DATE                                           as "startTime", --  生效日期
                T.CONTRACT_END_DATE                                             as "endTime", --  到期日期
                (SELECT T2.PARTNER_ID

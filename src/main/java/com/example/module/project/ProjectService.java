@@ -102,15 +102,19 @@ public class ProjectService {
         });
 
         //查询项目表'已报备', '报备中', '已立项'数据
-        List<ProjectBid> baseProjectBids = projectMapper.selectBaseProjectHandler();
+       // List<ProjectBid> baseProjectBids = projectMapper.selectBaseProjectHandler();
 
         //合并数据
-        projectBids.addAll(baseProjectBids);
+        //projectBids.addAll(baseProjectBids);
 
-        log.info("保存数据:project_bid");
-        mongoTemplate.insert(projectBids,TABLE_PROJECT_BID);
-        log.info("保存数据:project_answer");
-        mongoTemplate.insert(allAnswers,TABLE_PROJECT_ANSWER);
+        if(!Objects.isNull(projectBids)) {
+            log.info("保存数据:project_bid");
+            mongoTemplate.insert(projectBids, TABLE_PROJECT_BID);
+        }
+        if(!Objects.isNull(allAnswers)) {
+            log.info("保存数据:project_answer");
+            mongoTemplate.insert(allAnswers, TABLE_PROJECT_ANSWER);
+        }
         return projectBids;
     }
 
@@ -129,7 +133,7 @@ public class ProjectService {
                 case "MapWinBidResultAnalyse": projectBid.setWinBidResultAnalyse((MapWinBidResultAnalyse) props.get(0));break;
             }
         }else {
-            log.error("未查询招投标项目：{} {} 信息", projectId,attrDesc);
+            log.debug("未查询招投标项目：{} {} 信息", projectId,attrDesc);
         }
     }
 
