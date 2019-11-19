@@ -4,6 +4,7 @@ import com.example.module.resource.model.ArchiveApply;
 import com.example.module.resource.model.ArchiveFile;
 import com.example.module.resource.model.ArchiveLendLog;
 import com.example.module.resource.model.ArchiveManage;
+import com.example.module.resource.model.ArchiveManageNew;
 import com.example.utils.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -77,6 +78,13 @@ public class ResourceController {
         return Result.<List<ArchiveManage>>success(resourceService.projectPerformanceHandler());
     }
 
+
+    //项目业绩
+    @ApiOperation("项目业绩-new")
+    @GetMapping("/newProjectPerformance")
+    public Result<List<ArchiveManageNew>> newProjectPerformanceHandler() {
+        return Result.<List<ArchiveManageNew>>success(resourceService.newProjectPerformanceHandler());
+    }
 
     //档案使用记录
     @ApiOperation("档案使用记录")

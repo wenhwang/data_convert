@@ -6,6 +6,7 @@ import com.example.module.resource.model.ArchiveApply;
 import com.example.module.resource.model.ArchiveFile;
 import com.example.module.resource.model.ArchiveLendLog;
 import com.example.module.resource.model.ArchiveManage;
+import com.example.module.resource.model.ArchiveManageNew;
 import com.example.module.system.SystemService;
 import com.example.module.system.model.MapCodeCategory;
 import com.example.module.system.model.MapcodeParam;
@@ -230,6 +231,27 @@ public class ResourceService {
         }
         return projectPerformances;
     }
+
+    @Transactional
+    public List<ArchiveManageNew> newProjectPerformanceHandler() {
+        List<Map> categorys = helperService.query("label", "项目业绩", new String[]{"categoryId"}, "sys_dict_category");
+        List<Map> childTypes = helperService.query("label", "项目业绩", new String[]{"dictId", "dictName"}, "sys_dict");
+        String categoryId = categorys.get(0).get("categoryId") + "";
+
+        List<ArchiveManageNew> projectPerformances = resourceMapper.selectNewProjectPerformances();
+        log.info("Query {} data of {} type ", "项目业绩", projectPerformances.size());
+        if (!Objects.isNull(projectPerformances)) {
+            projectPerformances.forEach(r -> {
+                r.setParentTypeId(categoryId);
+                r.setTypeId(HelperService.replaceRefId(r.getType(), childTypes));
+            });
+            mongoTemplate.insert(projectPerformances, TABLE_ARCHIVE_MANAGE);
+            log.info("Save new data to {} ", TABLE_ARCHIVE_MANAGE);
+        }
+        return projectPerformances;
+    }
+
+
 
     public List<ArchiveLendLog> cmpEmyStampRecordHandler() {
         List<ArchiveLendLog> lendLogs = resourceMapper.selectCmpEmyStampRecords();

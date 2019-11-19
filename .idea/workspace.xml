@@ -2,9 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="98d3e2d3-878d-44f9-9106-e337053311bc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/src/main/resources/mapper/CustomerMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mapper/CustomerMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/META-INF/data_convert.kotlin_module" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/mapper/CustomerMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mapper/CustomerMapper.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/module/resource/model/ArchiveManageNew.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/module/resource/ResourceService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/mapper/FinancialMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mapper/FinancialMapper.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/mapper/ResourceMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mapper/ResourceMapper.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceMapper.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceMapper.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/example/module/resource/ResourceService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/mapper/FinancialMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mapper/FinancialMapper.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/mapper/ResourceMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mapper/ResourceMapper.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -44,6 +54,12 @@
         <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
         <item name="47.96.109.195" type="feb32156:DbDataSourceImpl" />
         <item name="AHZH_USER: schema" type="3abd1b6a:OraImplModel$Schema" />
+      </path>
+      <path>
+        <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
+        <item name="47.96.109.195" type="feb32156:DbDataSourceImpl" />
+        <item name="AHZH_USER: schema" type="3abd1b6a:OraImplModel$Schema" />
+        <item name="tables" type="d4e8921:DatabaseStructure$FamilyGroup" />
       </path>
       <path>
         <item name="Database" type="3277223f:DatabaseStructure$DbRootGroup" />
@@ -110,10 +126,9 @@
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
-    <key name="CreateClassDialog.RecentsKey">
-      <recent name="com.example.module.customer.model" />
-      <recent name="com.example.module.supply.model" />
-      <recent name="com.example.module.project.model" />
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\work_spaces\sources\data_convert\files\export" />
+      <recent name="E:\work_spaces\sources\data_convert\src\main\resources\files" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="E:\work_spaces\sources\data_convert\src\main\java\com\example\module\customer\export" />
@@ -123,15 +138,16 @@
       <recent name="E:\work_spaces\sources\data_convert\src\main\java\com\example\module\financial\eimport" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.example.module.resource.model" />
       <recent name="com.example.module.financial.model" />
       <recent name="com.example.module.financial" />
       <recent name="com.example.module.excel" />
       <recent name="com.example.module.system" />
-      <recent name="com.example.module.project.model" />
     </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="E:\work_spaces\sources\data_convert\files\export" />
-      <recent name="E:\work_spaces\sources\data_convert\src\main\resources\files" />
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="com.example.module.customer.model" />
+      <recent name="com.example.module.supply.model" />
+      <recent name="com.example.module.project.model" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -347,7 +363,10 @@
       <workItem from="1573691982442" duration="7101000" />
       <workItem from="1573708361641" duration="1594000" />
       <workItem from="1573709978982" duration="110000" />
-      <workItem from="1573710136570" duration="5111000" />
+      <workItem from="1573710136570" duration="6096000" />
+      <workItem from="1573810374741" duration="1380000" />
+      <workItem from="1574043634181" duration="19208000" />
+      <workItem from="1574125631292" duration="1002000" />
     </task>
     <servers />
   </component>

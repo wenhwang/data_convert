@@ -12,6 +12,11 @@
                 javaType="string"></result>
     </resultMap>
 
+    <resultMap id="ARCHIVE_MANAGE_NEW" type="com.example.module.resource.model.ArchiveManageNew" autoMapping="true">
+        <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
+                javaType="string"></result>
+    </resultMap>
+
     <resultMap id="ARCHIVE_LEND_LOG" type="com.example.module.resource.model.ArchiveLendLog" autoMapping="true">
         <result column="createBy" property="createBy" typeHandler="com.example.config.CreateByFieldHandler"
                 javaType="string"></result>
@@ -454,6 +459,60 @@
         FROM AHZH_USER.EPM_RESOUCE_LOAN_RETURN_LINE T
         WHERE T.RESOUCE_LOAN_RETURN_HEAD_ID = #{applyId}
           AND T.LOAN_RETURN_STAT = 2
+    </select>
+
+    <select id="selectNewProjectPerformances" resultMap="ARCHIVE_MANAGE_NEW">
+
+        SELECT T2.PROJECT_CONTRACT_CODE     AS "number", --合同编号
+               'XMYJ' || T1.PROJECT_ID || '-' || T2.PROJECT_CONTRACT_ID AS "sysNumber", --业绩编号
+               LOWER(sys_guid())          AS "archiveId", --业绩id
+               '1'                        AS "archiveType", --档案类型
+               T1.PROJECT_ID              AS "projectId", --项目ID
+               T1.PROJECT_NAME            AS "projectName", --项目名称
+               T1.PROJECT_CODE            AS "projectCode",--项目编号
+               T1.PROJECT_TYPE            AS "typeId",
+               (SELECT DICTNAME FROM AHZH_USER.CPCDICT WHERE PID = -1026680 AND DICTVALUE =  T1.PROJECT_TYPE)          AS "type",
+               NVL(T1.SQUARE, T2.SQUARE)  AS "constructionArea", --面积
+               NVL(T1.BRAND, T2.BRAND)    AS "brand", -- 品牌
+               T1.BID_WIN_TIME            AS "publicityDate", --中标时间
+               T1.BID_WIN_AMOUNT          AS "winBidAmount", --中标金额
+               T1.COMMENCEMENT_DATE       AS "startWorkDate", --开工日期
+               T1.ACCEPTANCE_DATE         AS "checkWorkDate", -- 验收日期
+               PARTNER_ID                 AS "partnerId", --合伙人 ID
+               T1.PARTNER_LINKMAN         AS "partnerName", --合伙人
+               T2.PROJECT_MANAGER_NAME               AS "builder", --项目经理
+               T2.PROJECT_CONTRACT_ID     AS "contractId", --合同ID
+               T2.PROJECT_CONTRACT_NAME   AS "name", --合同名称
+               T2.CONTRACT_AMOUNT         AS "actualContractAmount", --合同金额
+               T2.PROJECT_CONTRACT_TYPE  AS "contractTypeId",
+               (SELECT T.DICTNAME
+                FROM AHZH_USER.CPCDICT T
+                WHERE T.DICTCODE LIKE 'Project_Contract_Type%'
+                  AND T2.PROJECT_CONTRACT_TYPE = T.DICTVALUE) AS "contractType", --合同类别
+               ''                               AS "acceptanceCriteriaId",--验收标准Id
+               T2.ACCEPTANCE_CRITERIA           AS "acceptanceCriteria", -- 验收标准
+               T2.REMARK                        AS  "remarks",--	备注
+               T1.CREATE_BY                     AS "createBy", --创建人
+               T1.CREATE_DATE                   AS "createTime", --创建时间
+               T1.MODIFY_BY                     AS "updateBy", --修改人
+               T1.MODIFY_DATE                   AS "updateTime", --修改时间
+               '0'                               AS "isEnabled",--是否可用
+               '0'                              AS "useStatus", --使用状态
+               '0'                              AS "validityStatus", --有效期状态
+               '0'                              AS "delFlag",
+               ''                               AS "safekeepUser",--保管人
+               ''                              AS "safekeepUserId", --保管人Id
+               ''                              AS "parentType", --证件类型父类
+               ''                              AS "parentTypeId",--证件类型父类Id
+               ''                              AS "safekeepUserRealName",--保管人真实姓名
+               T2.SIGNUP_DATE                   AS "startDate",
+               T2.END_TIME                     AS "endDate",
+               T1.COMPLETION_DATE              AS "completionDate"
+        FROM AHZH_USER.EPM_PROJECT T1, AHZH_USER.EPM_PROJECT_CONTRACT T2
+        WHERE T1.PROJECT_ID = T2.PROJECT_ID
+          AND T2.PROJECT_CONTRACT_CHARACTER = 1
+
+
     </select>
 
 

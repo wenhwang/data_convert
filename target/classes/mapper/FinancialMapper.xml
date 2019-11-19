@@ -304,7 +304,8 @@
                  T.PROJECT_ID                     AS "projectId",               --     项目id
                  (SELECT PROJECT_NAME FROM  AHZH_USER.VIEW_PROJECT_BASE T2 WHERE T2.PROJECT_ID = T.PROJECT_ID)  AS "projectName",             --     项目名称
                  T.PUR_CONTRACT_ID                AS "contractId",              --      合同id
-                 (SELECT T2.PROJECT_CONTRACT_NAME FROM  AHZH_USER. EPM_PROJECT_CONTRACT T2 WHERE T2.PROJECT_CONTRACT_ID = T.PUR_CONTRACT_ID)    AS "contractName",            --      合同名称
+                 ''  AS "contractName",            --      合同名称
+                 -- (SELECT T2.PROJECT_CONTRACT_NAME FROM  AHZH_USER. EPM_PROJECT_CONTRACT T2 WHERE T2.PROJECT_CONTRACT_ID = T.PUR_CONTRACT_ID)    AS "contractName",            --      合同名称
                  T.PUR_CONTRACT_CODE              AS "contractNumber",          --      合同编号
                  (SELECT T2.CONTRACT_AMOUNT FROM  AHZH_USER. EPM_PROJECT_CONTRACT T2 WHERE T2.PROJECT_CONTRACT_ID = T.PUR_CONTRACT_ID)    AS "contractAmount",          --     合同金额
                  ''                             AS "settlementWayId",         --     结算方式ID

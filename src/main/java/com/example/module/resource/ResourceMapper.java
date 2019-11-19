@@ -20,6 +20,7 @@ import com.example.module.resource.model.ArchiveApply;
 import com.example.module.resource.model.ArchiveFile;
 import com.example.module.resource.model.ArchiveLendLog;
 import com.example.module.resource.model.ArchiveManage;
+import com.example.module.resource.model.ArchiveManageNew;
 
 import java.util.Date;
 import java.util.List;
@@ -54,6 +55,10 @@ public interface ResourceMapper {
 
     //项目业绩
     List<ArchiveManage> selectProjectPerformances();
+
+    //项目业绩-new
+    List<ArchiveManageNew> selectNewProjectPerformances();
+
 
     //档案使用记录
     List<ArchiveLendLog> selectCmpEmyStampRecords();
